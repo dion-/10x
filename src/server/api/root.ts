@@ -1,5 +1,6 @@
 import { createTRPCRouter } from "~/server/api/trpc";
 import { breadthRouter } from "~/server/api/routers/breadth";
+import { iconsRouter } from "~/server/api/routers/icons";
 
 /**
  * This is the primary router for your server.
@@ -8,6 +9,7 @@ import { breadthRouter } from "~/server/api/routers/breadth";
  */
 export const appRouter = createTRPCRouter({
   breadth: breadthRouter,
+  icons: iconsRouter,
 });
 
 // export type definition of API

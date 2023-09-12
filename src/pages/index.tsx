@@ -1,222 +1,345 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useRef, useState, FormEvent } from "react";
 import { type NextPage } from "next";
 import Head from "next/head";
-import { api } from "~/utils/api";
 import classNames from "classnames";
-import { atom, useAtom } from "jotai";
+import { atom, useAtom, useAtomValue } from "jotai";
+import { atomWithHash } from "jotai-location";
+import { api } from "~/utils/api";
+import { useCompletion } from "ai/react";
+import useTilg from "tilg";
 
-const topicText = atom<string>("");
+const topicTextAtom = atomWithHash<string>("query", "");
+//const topicTypeAtom = atom<TopicPromptKey>("Overview");
 const hoveredModuleAtom = atom<string | null>(null);
 
-const Home: NextPage = () => {
-  const [text, setText] = useAtom(topicText);
-  const [textVisible, setTextVisible] = useState("");
+const rawCompletionTextAtom = atom<string>("");
+const isRawCompletionLoading = atom<boolean>(false);
+const topicsAtom = atom<{ name: string; description: string }[]>((get) => {
+  const rawCompletionText = get(rawCompletionTextAtom);
+
+  const topics = rawCompletionText
+    .split("\n\n")
+    .map((topicString) => ({
+      name: topicString.split(":")[0] || "",
+      description: topicString.split(":")[1] || "",
+    }))
+    .slice(0, 1);
+  return topics;
+});
+
+function Form() {
+  const {
+    completion,
+    input,
+    stop,
+    isLoading,
+    handleInputChange,
+    handleSubmit,
+  } = useCompletion({
+    api: "/api/topics",
+  });
+
+  const [, setRawCompletionText] = useAtom(rawCompletionTextAtom);
+  const [, setIsLoading] = useAtom(isRawCompletionLoading);
 
   useEffect(() => {
-    setTextVisible(text);
-  }, [text]);
+    setRawCompletionText(completion);
+  }, [completion]);
 
+  useEffect(() => {
+    setIsLoading(isLoading);
+  }, [isLoading]);
+
+  return (
+    <form
+      className="flex flex-col gap-3 px-3 md:flex-row"
+      onSubmit={input !== "" ? handleSubmit : undefined}
+    >
+      <input
+        className="h-12 rounded-md  bg-[rgba(0,0,0,0.07)] px-4  md:w-96"
+        placeholder="Enter topic, .e.g., Mathematics"
+        value={input}
+        onChange={handleInputChange}
+        // value={textVisible}
+        // onKeyDown={(e) => {
+        //   if (e.key === "Enter") {
+        //     setText(textVisible);
+        //   }
+        // }}
+        // onChange={(e) => {
+        //   setTextVisible(e.target.value);
+        // }}
+      />
+      <button
+        disabled={isLoading}
+        type="submit"
+        className="h-12 rounded-md bg-[rgba(255,255,255,0.07)] bg-purple-900 px-4 font-bold text-white"
+      >
+        Breakdown
+      </button>
+
+      <button type="button" onClick={stop}>
+        Stop
+      </button>
+    </form>
+  );
+}
+
+const Home: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Ghost Writer</title>
+        <title>Summarise App</title>
         <meta name="description" content="Infinite" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#1a141c] to-[#3a3142] pt-32">
-        <header className="absolute top-0 pt-8">
-          <h1 className="mb-8 text-center text-5xl font-extrabold tracking-tight text-white">
-            <span className=" stroke-white stroke-zinc-50 text-[hsl(280,100%,70%)]">
-              Ghost{" "}
-            </span>{" "}
-            <span className="text-shadow text-[#7c50ba]">Writer</span>
+      <main className="flex min-h-screen flex-col items-center bg-gradient-to-b  pt-32">
+        <header className="">
+          <h1 className="mb-8 px-3 text-center text-5xl font-extrabold tracking-tight text-white">
+            <span className="  text-[hsl(280,100%,70%)]">Summarise.</span>
+            <span className="text-shadow text-[#7c50ba]">App</span>
           </h1>
 
-          <div className="flex flex-row gap-3">
-            <input
-              className="h-12 w-96 rounded-md bg-[rgba(255,255,255,0.07)] px-4 text-white"
-              placeholder="Enter topic, .e.g., Mathematics"
-              value={textVisible}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  setText(textVisible);
-                }
-              }}
-              onChange={(e) => {
-                setTextVisible(e.target.value);
-              }}
-            />
-          </div>
+          <Form />
         </header>
-        <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
-          {/* <p className="mb-1 text-white">{isFetching && "fetching"}</p>
-          <p className="mb-1 text-white">{isStale && "stale"}</p> */}
-          <TopicList topicString={text} />
+
+        <div className="container flex flex-col items-center justify-center gap-12 pb-16 pt-4 md:px-4">
+          <AllTopics />
         </div>
       </main>
     </>
   );
 };
 
-const TopicList = memo(function TopicList({
-  topicString,
-}: {
-  topicString: string;
-}) {
-  const {
-    isLoading,
-    data: topics,
-    isStale,
-    isFetching,
-  } = api.breadth.generateTopics.useQuery(
-    { text: topicString },
-    {
-      keepPreviousData: true,
-      refetchOnWindowFocus: false,
-      staleTime: 1000 * 60 * 60 * 24 * 7,
-    }
-  );
+const AllTopics = function TopicList() {
+  const isLoading = useAtomValue(isRawCompletionLoading);
+  const topics = useAtomValue(topicsAtom);
+  const minimumCountToDisplay = 8;
+  const loadingSkeletonCount = minimumCountToDisplay - topics.length;
+  //console.log("MOUNT TOPIC LIST", topics.length);
+  //useTilg();
   return (
-    <div className="flex w-screen flex-col gap-4 overflow-x-auto px-6 pb-6 md:flex-row">
-      {isFetching && (
-        <>
-          <TopicLoadingSkeleton />
-          <TopicLoadingSkeleton />
-          <TopicLoadingSkeleton />
-          <TopicLoadingSkeleton />
-          <TopicLoadingSkeleton />
-          <TopicLoadingSkeleton />
-          <TopicLoadingSkeleton />
-          <TopicLoadingSkeleton />
-        </>
-      )}
+    <div className="flex w-screen flex-col gap-2 overflow-x-auto pb-6 md:flex-row md:px-6">
+      {topics.map((topic, i) => {
+        return <Topic key={i} index={i} />;
+      })}
 
-      {!isLoading && topics && (
-        <>
-          {topics.map((topic) => {
-            return (
-              <Topic
-                key={topic.name}
-                name={topic.name}
-                description={topic.description}
-              />
-            );
-          })}
-        </>
-      )}
+      {Array.from({ length: loadingSkeletonCount }).map((_, i) => (
+        <TopicLoadingSkeleton key={`skeleteon${i}`} />
+      ))}
     </div>
   );
-});
+};
 
-const Topic = memo(function Topic({
-  name,
-  description,
-}: {
-  name: string;
-  description: string;
-}) {
-  const {
-    isLoading,
-    data: modules,
-    isFetching,
-    isStale,
-  } = api.breadth.generateModules.useQuery(
-    {
-      text: name + ": " + description,
-    },
-    {
-      staleTime: 1000 * 60 * 60 * 24 * 7,
-      retryOnMount: false,
-    }
-  );
+const Topic = memo(function Topic({ index }: { index: number }) {
+  const [topics] = useAtom(topicsAtom);
+  const isFetching = useAtomValue(isRawCompletionLoading);
+  const isLast = index === topics.length - 1;
+  const hasFinishedTopicCompletion = !isLast || !isFetching;
 
+  const topic = topics[index];
+  //useTilg();
+  if (topic === undefined) {
+    return null;
+  }
+
+  const { name, description } = topic;
+
+  //console.log("Topic MOUNTED", name, description.length, hasFinished);
   return (
     <div className="flex flex-col">
       <div className="flex h-14 items-center px-3">
-        <div className="overflow-hidden align-middle text-base font-bold text-white">
+        <div className="overflow-hidden align-middle text-base font-bold ">
           {name}
         </div>
       </div>
 
-      <div className="flex flex-row gap-3 py-2 md:flex-col">
-        {isLoading && <ModulesLoadingSkeleton />}
-
-        {!isLoading &&
-          modules &&
-          modules.map((module) => (
-            <Module
-              key={module.name}
-              name={module.name}
-              description={module.description}
-            />
-          ))}
+      <div className="flex flex-row gap-3 overflow-x-auto pb-4 pl-3 md:flex-col md:overflow-x-visible md:py-2">
+        {hasFinishedTopicCompletion ? (
+          <TopicModuleDisplay name={name} description={description} />
+        ) : (
+          Array.from({ length: 8 }).map((_, i) => (
+            <ModuleLoadingSkeleton key={i} />
+          ))
+        )}
       </div>
     </div>
   );
 });
 
-const Module = memo(function Module({
+const TopicModuleDisplay = function TopicModuleDisplay({
   name,
   description,
 }: {
   name: string;
   description: string;
 }) {
-  const [text, setText] = useAtom(topicText);
-  const [hoveredModule, setHoveredModule] = useAtom(hoveredModuleAtom);
-  const isHovering = hoveredModule === name + description;
-  const isOtherModuleHovering = hoveredModule !== null && !isHovering;
+  const {
+    completion,
+    input,
+    stop,
+    isLoading,
+    handleInputChange,
+    handleSubmit,
+  } = useCompletion({
+    api: "/api/modules",
+    initialInput: name + ": " + description,
+    id: name + ": " + description,
+  });
+
+  const modules =
+    completion.split("\n\n").map((topicString) => {
+      const name = removeLeadingNumber(topicString.split(":")[0] || "");
+      return {
+        name,
+        description: topicString.split(":")[1] || "",
+      };
+    }) || [];
+  const minimumCountToDisplay = 8;
+  const loadingSkeletonCount = minimumCountToDisplay - modules.length;
+  const ref = useRef<HTMLFormElement>(null);
+
+  //console.log("TopicModuleDisplay MOUNTED", name, description.length);
+  //useTilg();
+  const hasSubmitted = useRef(false);
+  useEffect(() => {
+    if (!hasSubmitted.current && ref.current) {
+      console.log("SUBMIT", name, description.length);
+
+      // Hack to submit the form on mount. Perhaps there is a better way to do this?
+      handleSubmit({
+        preventDefault: (): void => {
+          //
+        },
+      } as FormEvent<HTMLFormElement>);
+      hasSubmitted.current = true;
+    }
+  }, [ref.current, hasSubmitted.current]);
+
+  //console.log(completion, modules);
 
   return (
-    <div
-      className={classNames(
-        "relative h-36 w-60 cursor-pointer overflow-visible",
-        {
-          "z-10": isHovering,
-        }
-      )}
-      onMouseEnter={() => setHoveredModule(name + description)}
-      onMouseLeave={() => setHoveredModule(null)}
-      role="button"
-      onClick={() => {
-        setText(text + " " + name);
-      }}
-    >
+    <>
+      <form onSubmit={handleSubmit} ref={ref} className="hidden">
+        <input value={input} onChange={handleInputChange} />
+      </form>
+      {modules.map((module) => {
+        const isLast = module === modules[modules.length - 1];
+        const isCompleting = isLast && isLoading;
+        return (
+          <Module
+            key={module.name}
+            name={module.name}
+            description={module.description}
+            isCompleting={isCompleting}
+          />
+        );
+      })}
+
+      {isLoading &&
+        Array.from({ length: loadingSkeletonCount }).map((_, i) => (
+          <ModuleLoadingSkeleton key={i} />
+        ))}
+    </>
+  );
+};
+
+const Module = memo(
+  function Module({
+    name,
+    description,
+    isCompleting,
+  }: {
+    name: string;
+    description: string;
+    isCompleting: boolean;
+  }) {
+    const [text, setText] = useAtom(topicTextAtom);
+    const [hoveredModule, setHoveredModule] = useAtom(hoveredModuleAtom);
+    const isHovering = hoveredModule === name + description;
+    const isOtherModuleHovering = hoveredModule !== null && !isHovering;
+
+    return (
       <div
         className={classNames(
-          "relative min-h-[9rem]  w-60 rounded-md bg-[rgba(55,55,55,1)] p-3 transition-all",
+          "relative h-36 w-60 cursor-pointer overflow-visible",
           {
-            "h-[9rem] max-h-0 overflow-hidden": !isHovering,
-            "z-10 max-h-[1000rem] translate-y-[-0.75rem] overflow-auto shadow-lg":
-              isHovering,
-            "opacity-40": isOtherModuleHovering,
+            "z-10": isHovering,
           }
         )}
+        onMouseEnter={() => setHoveredModule(name + description)}
+        onMouseLeave={() => setHoveredModule(null)}
+        role="button"
+        tabIndex={-1}
+        onClick={() => {
+          setText(text + " " + name);
+        }}
       >
-        <h3 className="text-white">{name}</h3>
-        {/* <p className="mb-1 text-white">{isFetching && "fetching"}</p>
-              <p className="mb-1 text-white">{isStale && "stale"}</p> */}
-        <p className="mt-1 text-sm text-white opacity-80">{description}</p>
         <div
           className={classNames(
-            "absolute bottom-0 left-0 h-6 w-full bg-gradient-to-t from-[rgba(55,55,55,1)] to-transparent transition-all",
+            "relative min-h-[9rem]  w-60 rounded-md border  bg-white p-3  transition-all duration-300",
             {
-              "opacity-0": isHovering,
+              "h-[9rem] max-h-0 overflow-hidden": !isHovering,
+              "z-10 max-h-[1000rem] translate-y-[-0.75rem] overflow-auto shadow-lg":
+                isHovering,
+              "opacity-40": isOtherModuleHovering,
+              "scale-[.98] border-gray-200 opacity-50": isCompleting,
+              "border-gray-200  shadow": !isCompleting,
             }
           )}
-        />
+          style={{
+            // backgroundImage: "linear-gradient(135deg,#faffff,#fbfafb)",
+            // border: "1px solid rgba(176,182,253,.05)",
+            transition: "all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+          }}
+        >
+          <h3 className="">{name}</h3>
+          <p className="= mt-1 text-sm opacity-80">
+            {description}
+            <span className="text-purple-400"> █</span>
+          </p>
+
+          <div
+            className={classNames(
+              "mt-4  rounded-lg bg-purple-800 p-2 text-center text-xs font-bold text-white  transition-all ",
+              {
+                "opacity-0": !isHovering,
+                "translate–y-0 scale-100 opacity-100 shadow-lg": isHovering,
+              }
+            )}
+          >
+            Breakdown Further
+          </div>
+
+          <div
+            className={classNames(
+              "absolute bottom-0 left-0 h-6 w-full bg-gradient-to-t from-[#ffffff] to-transparent transition-all",
+              {
+                "opacity-0": isHovering,
+              }
+            )}
+          />
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  },
+  (prevProps, nextProps) => {
+    return (
+      prevProps.name === nextProps.name &&
+      prevProps.description === nextProps.description &&
+      prevProps.isCompleting === nextProps.isCompleting
+    );
+  }
+);
 
 function TopicLoadingSkeleton() {
   return (
-    <div className="flex  flex-col">
-      <div className="text-base font-bold text-white">{"   "}</div>
-
-      <div className="flex flex-col gap-2 py-2">
+    <div className="flex flex-col">
+      <div className="flex flex-row gap-3 overflow-x-auto pb-4 pl-3 md:flex-col md:overflow-x-visible md:py-2">
         <TopicTitleLoadingSkeleton />
+      </div>
+
+      <div className="flex flex-row gap-3 overflow-x-auto pb-4 pl-3 md:flex-col md:overflow-x-visible md:py-2">
         <ModulesLoadingSkeleton />
       </div>
     </div>
@@ -225,7 +348,13 @@ function TopicLoadingSkeleton() {
 
 function TopicTitleLoadingSkeleton() {
   return (
-    <div className="bg-muted flex w-60 animate-pulse rounded-md rounded-md bg-[rgba(255,255,255,0.15)] p-6" />
+    <div
+      className="bg-muted flex w-60 animate-pulse rounded-md p-5"
+      style={{
+        backgroundImage: "linear-gradient(135deg,#ffffff,#fafafa)",
+        //border: "1px solid rgba(176,182,253,.1)",
+      }}
+    />
   );
 }
 
@@ -246,8 +375,18 @@ function ModulesLoadingSkeleton() {
 
 function ModuleLoadingSkeleton() {
   return (
-    <div className="bg-muted flex h-36 w-60  animate-pulse rounded-md rounded-md bg-[rgba(255,255,255,0.07)] p-6" />
+    <div
+      className="bg-muted flex h-36 w-60 animate-pulse rounded-md bg-[rgba(255,255,255,0.07)] p-6"
+      style={{
+        backgroundImage: "linear-gradient(135deg,#ffffff,#fafafa)",
+        //border: "1px solid rgba(176,182,253,.1)",
+      }}
+    />
   );
+}
+
+function removeLeadingNumber(str: string) {
+  return str.replace(/^\d+\.\s*/, "");
 }
 
 export default Home;
