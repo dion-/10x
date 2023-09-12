@@ -23,7 +23,7 @@ const topicsAtom = atom<{ name: string; description: string }[]>((get) => {
       name: topicString.split(":")[0] || "",
       description: topicString.split(":")[1] || "",
     }))
-    .slice(0, 1);
+    .slice(0, 13);
   return topics;
 });
 
@@ -60,15 +60,6 @@ function Form() {
         placeholder="Enter topic, .e.g., Mathematics"
         value={input}
         onChange={handleInputChange}
-        // value={textVisible}
-        // onKeyDown={(e) => {
-        //   if (e.key === "Enter") {
-        //     setText(textVisible);
-        //   }
-        // }}
-        // onChange={(e) => {
-        //   setTextVisible(e.target.value);
-        // }}
       />
       <button
         disabled={isLoading}
@@ -78,9 +69,9 @@ function Form() {
         Breakdown
       </button>
 
-      <button type="button" onClick={stop}>
+      {/* <button type="button" onClick={stop}>
         Stop
-      </button>
+      </button> */}
     </form>
   );
 }
@@ -151,6 +142,14 @@ const Topic = memo(function Topic({ index }: { index: number }) {
       <div className="flex h-14 items-center px-3">
         <div className="overflow-hidden align-middle text-base font-bold ">
           {name}
+          <span
+            className={classNames("animate-pulse transition-all", {
+              "text-purple-400": !hasFinishedTopicCompletion,
+              "text-transparent": hasFinishedTopicCompletion,
+            })}
+          >
+            {hasFinishedTopicCompletion ? "" : " █"}
+          </span>
         </div>
       </div>
 
@@ -283,7 +282,7 @@ const Module = memo(
               "z-10 max-h-[1000rem] translate-y-[-0.75rem] overflow-auto shadow-lg":
                 isHovering,
               "opacity-40": isOtherModuleHovering,
-              "scale-[.98] border-gray-200 opacity-50": isCompleting,
+              "scale-[.98] border-gray-200": isCompleting,
               "border-gray-200  shadow": !isCompleting,
             }
           )}
@@ -291,12 +290,45 @@ const Module = memo(
             // backgroundImage: "linear-gradient(135deg,#faffff,#fbfafb)",
             // border: "1px solid rgba(176,182,253,.05)",
             transition: "all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+            backgroundImage: isCompleting
+              ? "linear-gradient(135deg,#ffffff,#f7f7f7)"
+              : "none",
           }}
         >
-          <h3 className="">{name}</h3>
-          <p className="= mt-1 text-sm opacity-80">
-            {description}
-            <span className="text-purple-400"> █</span>
+          <h3
+            className={classNames("font-medium transition-opacity", {
+              "opacity-90": !isCompleting,
+              "opacity-50": isCompleting,
+            })}
+          >
+            {name}
+            <span
+              className={classNames("animate-pulse transition-all", {
+                "text-purple-400": description === "",
+                "text-transparent": description !== "",
+              })}
+            >
+              {description === "" ? " █" : ""}
+            </span>
+          </h3>
+          <p className={classNames("mt-1 text-sm")}>
+            <span
+              className={classNames("transition-opacity", {
+                "opacity-80": !isCompleting,
+                "opacity-50": isCompleting,
+              })}
+            >
+              {description}
+            </span>
+            <span
+              className={classNames("animate-pulse transition-all", {
+                "text-purple-400": description !== "" && isCompleting,
+                "text-transparent": description === "" || !isCompleting,
+              })}
+            >
+              {" "}
+              █
+            </span>
           </p>
 
           <div
@@ -376,9 +408,9 @@ function ModulesLoadingSkeleton() {
 function ModuleLoadingSkeleton() {
   return (
     <div
-      className="bg-muted flex h-36 w-60 animate-pulse rounded-md bg-[rgba(255,255,255,0.07)] p-6"
+      className="bg-muted flex h-36 w-60 scale-[.98] animate-pulse rounded-md border border-gray-200 bg-[rgba(255,255,255,0.07)] p-6"
       style={{
-        backgroundImage: "linear-gradient(135deg,#ffffff,#fafafa)",
+        backgroundImage: "linear-gradient(135deg,#ffffff,#f7f7f7)",
         //border: "1px solid rgba(176,182,253,.1)",
       }}
     />

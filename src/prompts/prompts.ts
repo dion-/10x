@@ -15,7 +15,7 @@ export const topicPrompts: TopicPrompts = {
       role: "system",
       content:
         "You are an assistant who replies with 5-8 high level subtopics" +
-        "suitable to give me a solid overview of a given topic with a summary of each subtopics in one sentence. Respond in the language the user uses",
+        "suitable to give me a solid overview of a given topic with a summary of each subtopics in one sentence.",
     },
     {
       role: "user",
