@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import OpenAI from "openai";
 import { type ChatCompletionCreateParamsBase } from "openai/resources/chat/completions";
+//import { redis } from "~/integrations/redis";
 
 export async function prompt(
   messages: ChatCompletionCreateParamsBase["messages"],

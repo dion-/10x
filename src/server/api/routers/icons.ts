@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import { prompt } from "./prompt";
+import { prompt } from "../../../prompt";
 
 export const iconsRouter = createTRPCRouter({
   generateTopics: publicProcedure

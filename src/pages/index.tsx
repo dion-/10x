@@ -1,29 +1,33 @@
-import { memo, useEffect, useRef, useState, FormEvent } from "react";
+import { memo, useEffect, useRef } from "react";
+import { useCompletion } from "ai/react";
 import { type NextPage } from "next";
 import Head from "next/head";
 import classNames from "classnames";
 import { atom, useAtom, useAtomValue } from "jotai";
 import { atomWithHash } from "jotai-location";
-import { api } from "~/utils/api";
-import { useCompletion } from "ai/react";
-import useTilg from "tilg";
+import { useAnimate } from "framer-motion";
+import FanIcon from "./../icons/fan.svg";
+import SendIcon from "./../icons/send.svg";
+import ClickIcon from "./../icons/click.svg";
 
-const topicTextAtom = atomWithHash<string>("query", "");
-//const topicTypeAtom = atom<TopicPromptKey>("Overview");
+const rainbowGradient =
+  "linear-gradient(135deg,#f90,#fd66cb 25%,#9f6eff 50%,#0af 75%,#0ea)";
+
+const queryStringAtom = atomWithHash<string>("query", "");
 const hoveredModuleAtom = atom<string | null>(null);
 
 const rawCompletionTextAtom = atom<string>("");
-const isRawCompletionLoading = atom<boolean>(false);
+const isRawCompletionLoadingAtom = atom<boolean>(false);
+
 const topicsAtom = atom<{ name: string; description: string }[]>((get) => {
   const rawCompletionText = get(rawCompletionTextAtom);
 
-  const topics = rawCompletionText
-    .split("\n\n")
-    .map((topicString) => ({
-      name: topicString.split(":")[0] || "",
-      description: topicString.split(":")[1] || "",
-    }))
-    .slice(0, 13);
+  if (rawCompletionText === "") return [];
+
+  const topics = rawCompletionText.split("\n\n").map((topicString) => ({
+    name: topicString.split(":")[0] || "",
+    description: topicString.split(":")[1] || "",
+  }));
   return topics;
 });
 
@@ -35,12 +39,16 @@ function Form() {
     isLoading,
     handleInputChange,
     handleSubmit,
+    setInput,
+    complete,
   } = useCompletion({
     api: "/api/topics",
+    id: "topics",
   });
-
+  const [queryString, setQueryString] = useAtom(queryStringAtom);
   const [, setRawCompletionText] = useAtom(rawCompletionTextAtom);
-  const [, setIsLoading] = useAtom(isRawCompletionLoading);
+  const [, setIsLoading] = useAtom(isRawCompletionLoadingAtom);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     setRawCompletionText(completion);
@@ -50,13 +58,32 @@ function Form() {
     setIsLoading(isLoading);
   }, [isLoading]);
 
+  useEffect(() => {
+    stop();
+    setInput(queryString);
+    if (queryString === "") return;
+    complete(queryString)
+      .then((_) => {
+        //console.log("completed");
+      })
+      .catch((e) => {
+        console.error(e);
+      });
+  }, [queryString]);
+
   return (
     <form
-      className="flex flex-col gap-3 px-3 md:flex-row"
-      onSubmit={input !== "" ? handleSubmit : undefined}
+      ref={formRef}
+      className="relative flex flex-row items-center "
+      onSubmit={(e) => {
+        if (input !== "") {
+          handleSubmit(e);
+          setQueryString(input);
+        }
+      }}
     >
       <input
-        className="h-12 rounded-md  bg-[rgba(0,0,0,0.07)] px-4  md:w-96"
+        className="h-12 rounded-md  bg-slate-100 px-4 pr-14 md:w-96"
         placeholder="Enter topic, .e.g., Mathematics"
         value={input}
         onChange={handleInputChange}
@@ -64,17 +91,156 @@ function Form() {
       <button
         disabled={isLoading}
         type="submit"
-        className="h-12 rounded-md bg-[rgba(255,255,255,0.07)] bg-purple-900 px-4 font-bold text-white"
+        className="absolute right-0 flex cursor-pointer items-center justify-center  px-3 py-3 font-bold text-white"
       >
-        Breakdown
+        <SendIcon className="h-5 w-5" fill="rgba(0,0,0,.15)" />
       </button>
-
-      {/* <button type="button" onClick={stop}>
-        Stop
-      </button> */}
     </form>
   );
 }
+
+const SuggestedSearches = () => {
+  const [, setQueryString] = useAtom(queryStringAtom);
+  return (
+    <div className="mt-6 flex flex-col items-center justify-center gap-2 md:flex-row">
+      <div className="flex flex-row items-center justify-center gap-1 text-xs font-bold text-slate-700">
+        <ClickIcon
+          className="opacity-80"
+          style={{
+            width: "1.2em",
+            height: "1.2em",
+          }}
+        />
+        Try:
+      </div>
+      <ul className=" flex list-none flex-row flex-wrap justify-center gap-2 text-xs text-slate-700">
+        <li>
+          <button
+            className="cursor-pointer rounded-md bg-slate-100 px-2 py-1"
+            onClick={() => {
+              setQueryString("Travelling to New Zealand");
+            }}
+          >
+            Travelling to New Zealand
+          </button>
+        </li>
+        <li>
+          <button
+            className="cursor-pointer rounded-md bg-slate-100 px-2 py-1"
+            onClick={() => {
+              setQueryString("Pancake Recipe");
+            }}
+          >
+            Pancake Recipe
+          </button>
+        </li>
+        <li>
+          <button
+            className="cursor-pointer rounded-md bg-slate-100 px-2 py-1"
+            onClick={() => {
+              setQueryString("Overview of History of Greece");
+            }}
+          >
+            Overview Rome History
+          </button>
+        </li>
+        <li>
+          <button
+            className="cursor-pointer rounded-md bg-slate-100 px-2 py-1"
+            onClick={() => {
+              setQueryString("Timeline of World War II");
+            }}
+          >
+            Timeline of World War II
+          </button>
+        </li>
+        <li>
+          <button
+            className="cursor-pointer rounded-md bg-slate-100 px-2 py-1"
+            onClick={() => {
+              setQueryString("How to maintain a lawn?");
+            }}
+          >
+            How to maintain a lawn?
+          </button>
+        </li>
+      </ul>
+    </div>
+  );
+};
+
+const FancyBadge = () => {
+  const [isLoading] = useAtom(isRawCompletionLoadingAtom);
+  const [scope, animate] = useAnimate();
+
+  useEffect(() => {
+    if (isLoading) {
+      const startAnimation = async () => {
+        await animate(
+          "svg",
+          { rotate: 0 },
+          {
+            ease: "easeIn",
+            duration: 0,
+          }
+        );
+        await animate(
+          "svg",
+          { rotate: 360 * 50 },
+          {
+            ease: "easeInOut",
+            duration: 8,
+          }
+        );
+      };
+      startAnimation()
+        .then(() => {
+          //
+        })
+        .catch((e) => {
+          console.error(e);
+        });
+    } else {
+    }
+  }, [isLoading]);
+
+  return (
+    <div
+      className="text-md mb-12 flex items-center rounded-md border-2 border-slate-100 bg-gradient-to-r pl-1 pr-4 text-xl font-bold tracking-tight text-white shadow-md"
+      style={{
+        textShadow: "0 0 4px 4px rgba(0,0,0, 1)",
+        backgroundImage: rainbowGradient,
+        // boxShadow:
+        //   "3px 3px 6px rgba(0,0,0,0.125), -3px 3px 6px rgba(0,0,0,0.075)",
+      }}
+      ref={scope}
+    >
+      {/* <motion.div
+        style={{
+          width: "1.5em",
+          height: "1.5em",
+        }}
+        className="flex items-center justify-center "
+        initial={{ rotate: 0 }}
+        animate={{ rotate: 36000 }}
+        transition={{
+          type: "spring",
+          stiffness: 200,
+          damping: 2,
+          repeat: Infinity,
+          repeatType: "loop",
+          duration: 5,
+        }}
+      > */}
+      <FanIcon
+        style={{ width: "2em", height: "2em" }}
+        fill="rgba(255, 255, 255, 1)"
+      />
+      {/* </motion.div> */}
+      <h2>Hyperspeed LLM {isLoading ? "" : ""}</h2>
+    </div>
+  );
+};
 
 const Home: NextPage = () => {
   return (
@@ -84,17 +250,29 @@ const Home: NextPage = () => {
         <meta name="description" content="Infinite" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="flex min-h-screen flex-col items-center bg-gradient-to-b  pt-32">
-        <header className="">
-          <h1 className="mb-8 px-3 text-center text-5xl font-extrabold tracking-tight text-white">
-            <span className="  text-[hsl(280,100%,70%)]">Summarise.</span>
-            <span className="text-shadow text-[#7c50ba]">App</span>
+      <main className="flex min-h-screen flex-col items-center bg-gradient-to-b  pt-16">
+        <header className="flex flex-col items-center">
+          <h1 className="mb-6 px-3 text-center text-5xl font-extrabold tracking-tight">
+            <span
+              className="text-slate-100"
+              style={{
+                backgroundImage:
+                  "linear-gradient(90deg, hsla(215, 20%,15%, 1), hsla(215, 20%,50%, 1) )",
+                letterSpacing: "-0.025em",
+                WebkitTextFillColor: "transparent",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+              }}
+            >
+              10×.Cards
+            </span>
           </h1>
-
+          <FancyBadge />
           <Form />
+          <SuggestedSearches />
         </header>
 
-        <div className="container flex flex-col items-center justify-center gap-12 pb-16 pt-4 md:px-4">
+        <div className="container flex flex-col items-center justify-center gap-12 pb-16 pt-8 md:px-4">
           <AllTopics />
         </div>
       </main>
@@ -103,12 +281,9 @@ const Home: NextPage = () => {
 };
 
 const AllTopics = function TopicList() {
-  const isLoading = useAtomValue(isRawCompletionLoading);
   const topics = useAtomValue(topicsAtom);
   const minimumCountToDisplay = 8;
   const loadingSkeletonCount = minimumCountToDisplay - topics.length;
-  //console.log("MOUNT TOPIC LIST", topics.length);
-  //useTilg();
   return (
     <div className="flex w-screen flex-col gap-2 overflow-x-auto pb-6 md:flex-row md:px-6">
       {topics.map((topic, i) => {
@@ -123,36 +298,37 @@ const AllTopics = function TopicList() {
 };
 
 const Topic = memo(function Topic({ index }: { index: number }) {
+  const [queryString, setQueryString] = useAtom(queryStringAtom);
   const [topics] = useAtom(topicsAtom);
-  const isFetching = useAtomValue(isRawCompletionLoading);
+  const isFetching = useAtomValue(isRawCompletionLoadingAtom);
   const isLast = index === topics.length - 1;
   const hasFinishedTopicCompletion = !isLast || !isFetching;
-
   const topic = topics[index];
-  //useTilg();
   if (topic === undefined) {
     return null;
   }
-
   const { name, description } = topic;
-
-  //console.log("Topic MOUNTED", name, description.length, hasFinished);
   return (
     <div className="flex flex-col">
-      <div className="flex h-14 items-center px-3">
-        <div className="overflow-hidden align-middle text-base font-bold ">
+      <div className="relative flex h-16 items-center overflow-hidden text-ellipsis px-3">
+        <button
+          onClick={() => {
+            setQueryString(`${queryString.replace(name, "")} ${name}`);
+          }}
+          className={classNames(
+            "pl-3 text-left align-middle text-sm font-bold hover:underline"
+          )}
+          role="button"
+        >
           {name}
-          <span
-            className={classNames("animate-pulse transition-all", {
-              "text-purple-400": !hasFinishedTopicCompletion,
-              "text-transparent": hasFinishedTopicCompletion,
-            })}
-          >
-            {hasFinishedTopicCompletion ? "" : " █"}
-          </span>
-        </div>
+          {!hasFinishedTopicCompletion ? <Cursor /> : null}
+        </button>
+        <div
+          className={classNames(
+            "absolute bottom-0 left-0 h-4 w-full bg-gradient-to-t from-[#ffffff] to-transparent transition-all"
+          )}
+        />
       </div>
-
       <div className="flex flex-row gap-3 overflow-x-auto pb-4 pl-3 md:flex-col md:overflow-x-visible md:py-2">
         {hasFinishedTopicCompletion ? (
           <TopicModuleDisplay name={name} description={description} />
@@ -166,6 +342,20 @@ const Topic = memo(function Topic({ index }: { index: number }) {
   );
 });
 
+const Cursor = () => {
+  return (
+    <span
+      className="relative top-0.5 inline-block h-4 w-3 animate-pulse"
+      style={{
+        backgroundImage:
+          Math.random() > 0.99
+            ? "linear-gradient(135deg,#9f6eff 50%,#0af 75%,#0ea)"
+            : "linear-gradient(135deg,#f90,#fd66cb)",
+      }}
+    />
+  );
+};
+
 const TopicModuleDisplay = function TopicModuleDisplay({
   name,
   description,
@@ -173,16 +363,13 @@ const TopicModuleDisplay = function TopicModuleDisplay({
   name: string;
   description: string;
 }) {
-  const {
-    completion,
-    input,
-    stop,
-    isLoading,
-    handleInputChange,
-    handleSubmit,
-  } = useCompletion({
+  const [queryString] = useAtom(queryStringAtom);
+  const { completion, complete, input, stop, isLoading } = useCompletion({
     api: "/api/modules",
-    initialInput: name + ": " + description,
+    initialInput:
+      name && description
+        ? `${queryString} focus specifically on ${name}: ${description}`
+        : "",
     id: name + ": " + description,
   });
 
@@ -196,32 +383,28 @@ const TopicModuleDisplay = function TopicModuleDisplay({
     }) || [];
   const minimumCountToDisplay = 8;
   const loadingSkeletonCount = minimumCountToDisplay - modules.length;
-  const ref = useRef<HTMLFormElement>(null);
-
-  //console.log("TopicModuleDisplay MOUNTED", name, description.length);
-  //useTilg();
   const hasSubmitted = useRef(false);
   useEffect(() => {
-    if (!hasSubmitted.current && ref.current) {
-      console.log("SUBMIT", name, description.length);
+    if (hasSubmitted.current) return;
+    if (input === "") return;
+    complete(input)
+      .then((_) => {
+        //console.log("completed");
+      })
+      .catch((e) => {
+        console.error(e);
+      });
+    hasSubmitted.current = true;
+  }, [hasSubmitted.current]);
 
-      // Hack to submit the form on mount. Perhaps there is a better way to do this?
-      handleSubmit({
-        preventDefault: (): void => {
-          //
-        },
-      } as FormEvent<HTMLFormElement>);
-      hasSubmitted.current = true;
-    }
-  }, [ref.current, hasSubmitted.current]);
-
-  //console.log(completion, modules);
+  useEffect(() => {
+    return () => {
+      stop();
+    };
+  }, []);
 
   return (
     <>
-      <form onSubmit={handleSubmit} ref={ref} className="hidden">
-        <input value={input} onChange={handleInputChange} />
-      </form>
       {modules.map((module) => {
         const isLast = module === modules[modules.length - 1];
         const isCompleting = isLast && isLoading;
@@ -253,7 +436,7 @@ const Module = memo(
     description: string;
     isCompleting: boolean;
   }) {
-    const [text, setText] = useAtom(topicTextAtom);
+    const [text, setText] = useAtom(queryStringAtom);
     const [hoveredModule, setHoveredModule] = useAtom(hoveredModuleAtom);
     const isHovering = hoveredModule === name + description;
     const isOtherModuleHovering = hoveredModule !== null && !isHovering;
@@ -272,23 +455,23 @@ const Module = memo(
         tabIndex={-1}
         onClick={() => {
           setText(text + " " + name);
+          // Scroll to top
+          window.scrollTo(0, 0);
         }}
       >
         <div
           className={classNames(
             "relative min-h-[9rem]  w-60 rounded-md border  bg-white p-3  transition-all duration-300",
             {
-              "h-[9rem] max-h-0 overflow-hidden": !isHovering,
-              "z-10 max-h-[1000rem] translate-y-[-0.75rem] overflow-auto shadow-lg":
+              "border-transparent opacity-80": isOtherModuleHovering,
+              "scale-[.98] ": isCompleting,
+              "  shadow": !isCompleting,
+              "0 h-[9rem] max-h-0 overflow-hidden border-gray-100": !isHovering,
+              "z-10 max-h-[1000rem] translate-y-[-0.75rem] overflow-auto border-gray-200 shadow-lg":
                 isHovering,
-              "opacity-40": isOtherModuleHovering,
-              "scale-[.98] border-gray-200": isCompleting,
-              "border-gray-200  shadow": !isCompleting,
             }
           )}
           style={{
-            // backgroundImage: "linear-gradient(135deg,#faffff,#fbfafb)",
-            // border: "1px solid rgba(176,182,253,.05)",
             transition: "all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
             backgroundImage: isCompleting
               ? "linear-gradient(135deg,#ffffff,#f7f7f7)"
@@ -296,20 +479,14 @@ const Module = memo(
           }}
         >
           <h3
-            className={classNames("font-medium transition-opacity", {
+            className={classNames("text-sm font-semibold transition-opacity", {
               "opacity-90": !isCompleting,
               "opacity-50": isCompleting,
+              underline: isHovering,
             })}
           >
             {name}
-            <span
-              className={classNames("animate-pulse transition-all", {
-                "text-purple-400": description === "",
-                "text-transparent": description !== "",
-              })}
-            >
-              {description === "" ? " █" : ""}
-            </span>
+            {description === "" ? <Cursor /> : null}
           </h3>
           <p className={classNames("mt-1 text-sm")}>
             <span
@@ -320,28 +497,8 @@ const Module = memo(
             >
               {description}
             </span>
-            <span
-              className={classNames("animate-pulse transition-all", {
-                "text-purple-400": description !== "" && isCompleting,
-                "text-transparent": description === "" || !isCompleting,
-              })}
-            >
-              {" "}
-              █
-            </span>
+            {description !== "" && isCompleting ? <Cursor /> : null}
           </p>
-
-          <div
-            className={classNames(
-              "mt-4  rounded-lg bg-purple-800 p-2 text-center text-xs font-bold text-white  transition-all ",
-              {
-                "opacity-0": !isHovering,
-                "translate–y-0 scale-100 opacity-100 shadow-lg": isHovering,
-              }
-            )}
-          >
-            Breakdown Further
-          </div>
 
           <div
             className={classNames(
@@ -383,7 +540,7 @@ function TopicTitleLoadingSkeleton() {
     <div
       className="bg-muted flex w-60 animate-pulse rounded-md p-5"
       style={{
-        backgroundImage: "linear-gradient(135deg,#ffffff,#fafafa)",
+        backgroundImage: "linear-gradient(135deg,#ffffff,#f7f7f7)",
         //border: "1px solid rgba(176,182,253,.1)",
       }}
     />
