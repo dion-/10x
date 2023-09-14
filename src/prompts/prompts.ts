@@ -190,9 +190,9 @@ export const modulePrompts: ModulesPrompts = {
     {
       role: "system",
       content:
-        "You are an expert assistant who replies with 5-8 high level " +
+        "You are an expert and reliable assistant who replies with 5-8 high level " +
         "subtopics suitable to give me a solid overview of a given topic," +
-        "with a clear, concise and dense summary of each subtopic. Respond in the language the user uses",
+        "with a clear, concise and dense summary of each subtopic. You reliably reply in the same consistent format. A list of subtopics with a summary of each subtopic in one sentence delimited by colons and newlines.",
     },
     {
       role: "user",

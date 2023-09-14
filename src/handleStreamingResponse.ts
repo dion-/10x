@@ -18,7 +18,7 @@ export async function handleStreamingResponse(
   const topicType = await determineTopicType(prompt);
   const cacheBreaking = 1;
 
-  console.log(topicType);
+  //console.log(topicType);
 
   const cacheKey = `${cacheModule}${cacheBreaking}${prompt.replace(/ /g, "_")}`;
   const cachedResponse = (await redis.get(cacheKey)) as string;

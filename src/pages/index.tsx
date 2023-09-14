@@ -148,10 +148,10 @@ const SuggestedSearches = () => {
           <button
             className="cursor-pointer rounded-md bg-slate-100 px-2 py-1"
             onClick={() => {
-              setQueryString("Timeline of World War II");
+              setQueryString("Timeline of the 20th century");
             }}
           >
-            Timeline of World War II
+            Timeline of the 20th century
           </button>
         </li>
         <li>
@@ -215,28 +215,10 @@ const FancyBadge = () => {
       }}
       ref={scope}
     >
-      {/* <motion.div
-        style={{
-          width: "1.5em",
-          height: "1.5em",
-        }}
-        className="flex items-center justify-center "
-        initial={{ rotate: 0 }}
-        animate={{ rotate: 36000 }}
-        transition={{
-          type: "spring",
-          stiffness: 200,
-          damping: 2,
-          repeat: Infinity,
-          repeatType: "loop",
-          duration: 5,
-        }}
-      > */}
       <FanIcon
         style={{ width: "2em", height: "2em" }}
         fill="rgba(255, 255, 255, 1)"
       />
-      {/* </motion.div> */}
       <h2>Hyperspeed LLM {isLoading ? "" : ""}</h2>
     </div>
   );
@@ -375,9 +357,14 @@ const TopicModuleDisplay = function TopicModuleDisplay({
 
   const modules =
     completion.split("\n\n").map((topicString) => {
-      const name = removeLeadingNumber(topicString.split(":")[0] || "");
+      const rawName = removeLeadingNumber(topicString.split(":")[0] || "");
+      // Break out subname if it exists "Name (subname}"
+      const [name, rawSubname] = rawName.split(" (");
+      const subname = rawSubname ? rawSubname.replace(")", "") : undefined;
+
       return {
-        name,
+        name: name || rawName,
+        subname,
         description: topicString.split(":")[1] || "",
       };
     }) || [];
@@ -412,6 +399,7 @@ const TopicModuleDisplay = function TopicModuleDisplay({
           <Module
             key={module.name}
             name={module.name}
+            subName={module.subname}
             description={module.description}
             isCompleting={isCompleting}
           />
@@ -429,10 +417,12 @@ const TopicModuleDisplay = function TopicModuleDisplay({
 const Module = memo(
   function Module({
     name,
+    subName,
     description,
     isCompleting,
   }: {
     name: string;
+    subName?: string;
     description: string;
     isCompleting: boolean;
   }) {
@@ -486,8 +476,21 @@ const Module = memo(
             })}
           >
             {name}
-            {description === "" ? <Cursor /> : null}
+            {!subName && description === "" ? <Cursor /> : null}
           </h3>
+          {subName ? (
+            <p
+              className={classNames("text-sm transition-opacity ", {
+                "opacity-60": !isCompleting,
+                "opacity-20": isCompleting,
+                underline: isHovering,
+              })}
+            >
+              {subName}
+              {description === "" ? <Cursor /> : null}
+            </p>
+          ) : null}
+
           <p className={classNames("mt-1 text-sm")}>
             <span
               className={classNames("transition-opacity", {
