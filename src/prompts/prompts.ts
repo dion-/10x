@@ -21,7 +21,7 @@ export const topicPrompts: TopicPrompts = {
     {
       role: "system",
       content:
-        "You are an assistant who replies with 5-8 high level subtopics" +
+        "You are an assistant who replies with 5-7 high level subtopics" +
         "suitable to give me a solid overview of a given topic with a summary of each subtopics in one sentence.",
     },
     {
@@ -31,16 +31,12 @@ export const topicPrompts: TopicPrompts = {
     {
       role: "assistant",
       content: [
-        "Prehistoric Period (Before 3000 BCE): Emergence of early agricultural societies in Greece.",
-        "Early Bronze Age (3000-2000 BCE): Development of urban centers with advanced metallurgy and architecture.",
-        "Minoan Civilization (circa 2000-1400 BCE): Flourishing civilization on Crete, marked by palatial architecture and vibrant frescoes.",
-        "Mycenaean Civilization (circa 1600-1100 BCE): Dominant civilization in mainland Greece known for fortress palaces and richly decorated tombs.",
-        "Dark Ages (circa 1100-800 BCE): Period of decline characterized by loss of writing and urbanization.",
-        "Archaic Period (circa 800-500 BCE): Revival of Greek culture, with the rise of city-states and the introduction of the Greek alphabet.",
-        "Early Classical Period (circa 500-400 BCE): Golden age of Athens with developments in democracy, philosophy, and the arts.",
-        "Late Classical Period (circa 400-323 BCE): Period of wars and the leadership of notable individuals like Alexander the Great.",
-        "Hellenistic Period (circa 323-30 BCE): Expansion of Greek influence and developments in science, philosophy, and arts.",
-        "Roman Era (circa 30 BCE - 330 CE): Incorporation into the Roman Empire, with sustained Greek cultural influence and the adoption of Christianity as the state religion.",
+        "Prehistoric Period to Early Bronze Age (Before 3000-2000 BCE): The emergence of agricultural societies in Greece followed by the development of urban centers showcasing advanced metallurgy and architecture.",
+        "Minoan to Mycenaean Civilization (circa 2000-1100 BCE): A time marked by the flourishing Minoan civilization with vibrant frescoes and the dominance of Mycenaean civilization characterized by fortress palaces and ornate tombs.",
+        "Dark Ages to Archaic Period (circa 1100-500 BCE): Following a decline and loss of urbanization, Greece saw a cultural revival with the emergence of city-states and the introduction of the Greek alphabet.",
+        "Early to Late Classical Period (circa 500-323 BCE): Spanning the golden age of Athens, notable for developments in democracy and philosophy, to a period of wars and influential leaders like Alexander the Great.",
+        "Hellenistic Period (circa 323-30 BCE): A period of extended Greek influence with remarkable developments in science, philosophy, and arts.",
+        "Roman Era (circa 30 BCE - 330 CE): Greece's integration into the Roman Empire, maintaining Greek cultural influence and adopting Christianity as the state religion.",
       ].join("\n\n"),
     },
   ],
@@ -48,7 +44,7 @@ export const topicPrompts: TopicPrompts = {
     {
       role: "system",
       content:
-        "You are an assistant, for given a particular topic, will reply with 10 significant periods " +
+        "You are an assistant, for given a particular topic, will reply with 5-7 significant periods " +
         "suitable to give me a solid overview in a timeline in chronological order summary of each period in one sentence. The periods will have a start time and end time",
     },
     {
@@ -58,16 +54,12 @@ export const topicPrompts: TopicPrompts = {
     {
       role: "assistant",
       content: [
-        "Pre-war Tensions (Early 1930s to 1939): The rise of totalitarian regimes and aggressive expansionist policies exacerbated pre-existing tensions globally.",
-        "Invasion of Poland and War Outbreak (1939): WWII officially started with Germany's invasion of Poland on September 1, 1939, prompting Britain and France to declare war on Germany.",
-        "Early Axis Advances (1939-1940): Axis powers captured significant territories across Europe, including the fall of France in June 1940.",
-        "Formation of the Allies and Expansion to Africa and Asia (1940-1941): The Allies, mainly consisting of the UK, Soviet Union, and the USA post-1941, collaborated to counter the Axis powers, with the war expanding to North Africa and Asia.",
-        "Pearl Harbor and US Entry into the War (1941): Japan's attack on Pearl Harbor in December 1941 propelled the USA into the war, marking a turning point.",
-        "Axis Peak and Turning Points (1942-1943): Major battles such as Stalingrad and El Alamein marked the beginning of the Axis powers' decline.",
-        "Allied Invasion of Italy and D-Day (1943-1944): Allies secured Italy and initiated the D-Day invasion, a decisive operation for liberating Western Europe.",
-        "Liberation of Occupied Territories and Holocaust Revelation (1944-1945): Allies liberated occupied areas, uncovering the atrocities of the Holocaust.",
-        "End of War in Europe (1945): WWII in Europe ended with the unconditional surrender of Germany in May 1945, marking the end of Nazi Germany.",
-        "Atomic Bombs and Japanese Surrender (1945): The dropping of atomic bombs on Hiroshima and Nagasaki in August 1945 forced Japan's surrender, officially ending WWII globally.",
+        "Pre-war Tensions and Outbreak (Early 1930s-1939): The rise of totalitarian regimes fueled global tensions, culminating in Germany's invasion of Poland in 1939, which led Britain and France to declare war on Germany.",
+        "Axis Advances and Formation of Allies (1939-1941): Early victories by Axis powers saw the capture of considerable territories, while the Allies formed to counter this, expanding the war into Africa and Asia.",
+        "US Entry Following Pearl Harbor Attack (1941): The war marked a pivotal turn with Japan attacking Pearl Harbor, drawing the US actively into the conflict.",
+        "Major Turning Points in the War (1942-1943): The tide started to turn against the Axis powers with significant battles like Stalingrad and El Alamein paving the way for the decline of Axis forces.",
+        "Allied Advances Including D-Day and Liberation (1943-1945): The Allies initiated decisive operations such as the D-Day invasion and liberated occupied territories, unveiling the horrors of the Holocaust.",
+        "End of WWII with Axis Surrenders (1945): WWII came to an end with Germany's surrender followed by the dropping of atomic bombs on Hiroshima and Nagasaki, which forced Japan to surrender.",
       ].join("\n\n"),
     },
   ],

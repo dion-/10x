@@ -15,9 +15,14 @@ const rainbowGradient =
 
 const queryStringAtom = atomWithHash<string>("query", "");
 const hoveredModuleAtom = atom<string | null>(null);
-
 const rawCompletionTextAtom = atom<string>("");
 const isRawCompletionLoadingAtom = atom<boolean>(false);
+
+type ModuleCard = {
+  name: string;
+  subname?: string;
+  description: string;
+};
 
 const topicsAtom = atom<{ name: string; description: string }[]>((get) => {
   const rawCompletionText = get(rawCompletionTextAtom);
@@ -31,6 +36,103 @@ const topicsAtom = atom<{ name: string; description: string }[]>((get) => {
   return topics;
 });
 
+const Home: NextPage = () => {
+  return (
+    <>
+      <Head>
+        <title>10×</title>
+        <meta name="description" content="10×" />
+        <link rel="icon" href="/logo.png" />
+        <link rel="icon" href="/favicon.png" type="image/png" sizes="108x108" />
+      </Head>
+      <main className="flex min-h-screen flex-col items-center bg-gradient-to-b  pt-16">
+        <header className="flex flex-col items-center">
+          <h1 className="mb-6 px-3 text-center  font-extrabold tracking-tight">
+            <span
+              className="text-5xl text-slate-100"
+              style={{
+                backgroundImage:
+                  "linear-gradient(180deg, hsla(215, 20%,15%, 1), hsla(215, 20%,50%, 1) )",
+                letterSpacing: "-0.025em",
+                WebkitTextFillColor: "transparent",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+              }}
+            >
+              10×.cards
+            </span>
+          </h1>
+          <FancyBadge />
+          <Form />
+          <SuggestedSearches />
+        </header>
+
+        <div className="container flex flex-col items-center justify-center gap-12 pb-16 pt-8 md:px-4">
+          <AllTopics />
+        </div>
+        <ModuleModal />
+      </main>
+    </>
+  );
+};
+
+const moduleInModalAtom = atom<ModuleCard | null>(null);
+
+function ModuleModal() {
+  const [module, setModule] = useAtom(moduleInModalAtom);
+  const [, setQueryString] = useAtom(queryStringAtom);
+  if (!module) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="relative flex h-full w-full max-w-3xl flex-col items-center justify-center overflow-auto bg-white shadow-lg">
+        <div className="items- flex h-full w-full flex-col justify-center p-4">
+          <h2 className="text-2xl font-bold">{module.name}</h2>
+          {module.subname ? (
+            <h3 className="text-lg  opacity-50">{module.subname}</h3>
+          ) : null}
+          <p className="pt-2 text-lg ">{module.description}</p>
+          <div className="">
+            <button
+              className="mt-4 rounded-md bg-slate-700 px-4 py-2 font-bold text-white"
+              onClick={() => {
+                window.scrollTo({
+                  top: 0,
+                  behavior: "smooth",
+                });
+                setQueryString((prev) => prev + " " + module.name);
+                setModule(null);
+              }}
+            >
+              Search
+            </button>
+          </div>
+        </div>
+        <button
+          className="absolute right-0 top-0 p-4"
+          onClick={() => {
+            setModule(null);
+          }}
+        >
+          <svg
+            className="h-6 w-6 text-gray-700"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2.5"
+              d="M6 18L18 6M6 6l12 12"
+            ></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function Form() {
   const {
     completion,
@@ -38,7 +140,6 @@ function Form() {
     stop,
     isLoading,
     handleInputChange,
-    handleSubmit,
     setInput,
     complete,
   } = useCompletion({
@@ -74,16 +175,16 @@ function Form() {
   return (
     <form
       ref={formRef}
-      className="relative flex flex-row items-center "
+      className="relative flex w-[100vw] flex-row items-center px-4 md:w-96"
       onSubmit={(e) => {
         if (input !== "") {
-          handleSubmit(e);
-          setQueryString(input);
+          setQueryString(input); // useEffect above will trigger 'complete'
         }
+        e.stopPropagation();
       }}
     >
       <input
-        className="h-12 rounded-md  bg-slate-100 px-4 pr-14 md:w-96"
+        className="h-12 w-full  rounded-md bg-slate-100 px-4 pr-14 "
         placeholder="Enter topic, .e.g., Mathematics"
         value={input}
         onChange={handleInputChange}
@@ -91,7 +192,7 @@ function Form() {
       <button
         disabled={isLoading}
         type="submit"
-        className="absolute right-0 flex cursor-pointer items-center justify-center  px-3 py-3 font-bold text-white"
+        className="absolute right-4 flex cursor-pointer items-center justify-center  px-3 py-3 font-bold text-white"
       >
         <SendIcon className="h-5 w-5" fill="rgba(0,0,0,.15)" />
       </button>
@@ -102,19 +203,19 @@ function Form() {
 const SuggestedSearches = () => {
   const [, setQueryString] = useAtom(queryStringAtom);
   return (
-    <div className="mt-6 flex flex-col items-center justify-center gap-2 md:flex-row">
-      <div className="flex flex-row items-center justify-center gap-1 text-xs font-bold text-slate-700">
+    <div className="mt-6 flex flex-col gap-2 md:flex-row md:items-center  md:justify-center">
+      <div className="flex flex-row gap-1 pl-4 text-sm font-bold text-slate-700 md:justify-center">
         <ClickIcon
           className="opacity-80"
           style={{
-            width: "1.2em",
-            height: "1.2em",
+            width: "1.4em",
+            height: "1.4em",
           }}
         />
         Try:
       </div>
-      <ul className=" flex list-none flex-row flex-wrap justify-center gap-2 text-xs text-slate-700">
-        <li>
+      <ul className="flex list-none flex-row gap-2 overflow-scroll px-4 pb-4 text-xs text-slate-700">
+        <li className="flex-shrink-0 ">
           <button
             className="cursor-pointer rounded-md bg-slate-100 px-2 py-1"
             onClick={() => {
@@ -124,7 +225,7 @@ const SuggestedSearches = () => {
             Travelling to New Zealand
           </button>
         </li>
-        <li>
+        <li className="flex-shrink-0 ">
           <button
             className="cursor-pointer rounded-md bg-slate-100 px-2 py-1"
             onClick={() => {
@@ -134,7 +235,7 @@ const SuggestedSearches = () => {
             Pancake Recipe
           </button>
         </li>
-        <li>
+        <li className="flex-shrink-0 ">
           <button
             className="cursor-pointer rounded-md bg-slate-100 px-2 py-1"
             onClick={() => {
@@ -144,7 +245,7 @@ const SuggestedSearches = () => {
             Overview Rome History
           </button>
         </li>
-        <li>
+        <li className="flex-shrink-0 ">
           <button
             className="cursor-pointer rounded-md bg-slate-100 px-2 py-1"
             onClick={() => {
@@ -154,7 +255,7 @@ const SuggestedSearches = () => {
             Timeline of the 20th century
           </button>
         </li>
-        <li>
+        <li className="flex-shrink-0">
           <button
             className="cursor-pointer rounded-md bg-slate-100 px-2 py-1"
             onClick={() => {
@@ -186,10 +287,10 @@ const FancyBadge = () => {
         );
         await animate(
           "svg",
-          { rotate: 360 * 50 },
+          { rotate: 360 * 80 },
           {
             ease: "easeInOut",
-            duration: 8,
+            duration: 12,
           }
         );
       };
@@ -224,52 +325,24 @@ const FancyBadge = () => {
   );
 };
 
-const Home: NextPage = () => {
-  return (
-    <>
-      <Head>
-        <title>Summarise App</title>
-        <meta name="description" content="Infinite" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-      <main className="flex min-h-screen flex-col items-center bg-gradient-to-b  pt-16">
-        <header className="flex flex-col items-center">
-          <h1 className="mb-6 px-3 text-center text-5xl font-extrabold tracking-tight">
-            <span
-              className="text-slate-100"
-              style={{
-                backgroundImage:
-                  "linear-gradient(90deg, hsla(215, 20%,15%, 1), hsla(215, 20%,50%, 1) )",
-                letterSpacing: "-0.025em",
-                WebkitTextFillColor: "transparent",
-                WebkitBackgroundClip: "text",
-                backgroundClip: "text",
-              }}
-            >
-              10×.Cards
-            </span>
-          </h1>
-          <FancyBadge />
-          <Form />
-          <SuggestedSearches />
-        </header>
-
-        <div className="container flex flex-col items-center justify-center gap-12 pb-16 pt-8 md:px-4">
-          <AllTopics />
-        </div>
-      </main>
-    </>
-  );
-};
-
 const AllTopics = function TopicList() {
   const topics = useAtomValue(topicsAtom);
-  const minimumCountToDisplay = 8;
+  const minimumCountToDisplay = 6;
   const loadingSkeletonCount = minimumCountToDisplay - topics.length;
   return (
-    <div className="flex w-screen flex-col gap-2 overflow-x-auto pb-6 md:flex-row md:px-6">
+    <div className="flex w-screen flex-col gap-2 overflow-x-auto overflow-y-visible pb-14 md:flex-row md:px-6">
       {topics.map((topic, i) => {
-        return <Topic key={i} index={i} />;
+        const isLast = i === topics.length - 1;
+        const { name, description } = topic;
+
+        return (
+          <Topic
+            key={i}
+            name={name}
+            description={description}
+            isLast={isLast}
+          />
+        );
       })}
 
       {Array.from({ length: loadingSkeletonCount }).map((_, i) => (
@@ -279,20 +352,22 @@ const AllTopics = function TopicList() {
   );
 };
 
-const Topic = memo(function Topic({ index }: { index: number }) {
+const Topic = memo(function Topic({
+  name,
+  description,
+  isLast,
+}: {
+  name: string;
+  description: string;
+  isLast: boolean;
+}) {
   const [queryString, setQueryString] = useAtom(queryStringAtom);
-  const [topics] = useAtom(topicsAtom);
   const isFetching = useAtomValue(isRawCompletionLoadingAtom);
-  const isLast = index === topics.length - 1;
-  const hasFinishedTopicCompletion = !isLast || !isFetching;
-  const topic = topics[index];
-  if (topic === undefined) {
-    return null;
-  }
-  const { name, description } = topic;
+  const shouldStartRendering = !isLast || !isFetching;
+
   return (
     <div className="flex flex-col">
-      <div className="relative flex h-16 items-center overflow-hidden text-ellipsis px-3">
+      <div className="relative flex h-16 items-center overflow-hidden text-ellipsis px-3 hover:overflow-visible">
         <button
           onClick={() => {
             setQueryString(`${queryString.replace(name, "")} ${name}`);
@@ -302,20 +377,25 @@ const Topic = memo(function Topic({ index }: { index: number }) {
           )}
           role="button"
         >
-          {name}
-          {!hasFinishedTopicCompletion ? <Cursor /> : null}
+          {name.slice(0, 70)}
+          {!shouldStartRendering ? <Cursor /> : null}
         </button>
+        <div
+          className={classNames(
+            "absolute left-0 top-0 h-4 w-full bg-gradient-to-t from-transparent to-[#ffffff] transition-all"
+          )}
+        />
         <div
           className={classNames(
             "absolute bottom-0 left-0 h-4 w-full bg-gradient-to-t from-[#ffffff] to-transparent transition-all"
           )}
         />
       </div>
-      <div className="flex flex-row gap-3 overflow-x-auto pb-4 pl-3 md:flex-col md:overflow-x-visible md:py-2">
-        {hasFinishedTopicCompletion ? (
+      <div className="flex flex-row gap-3 overflow-x-auto px-4 pb-6 md:flex-col md:overflow-x-visible md:py-2 md:pl-3 md:pr-0">
+        {shouldStartRendering ? (
           <TopicModuleDisplay name={name} description={description} />
         ) : (
-          Array.from({ length: 8 }).map((_, i) => (
+          Array.from({ length: 6 }).map((_, i) => (
             <ModuleLoadingSkeleton key={i} />
           ))
         )}
@@ -338,7 +418,7 @@ const Cursor = () => {
   );
 };
 
-const TopicModuleDisplay = function TopicModuleDisplay({
+const TopicModuleDisplay = memo(function TopicModuleDisplay({
   name,
   description,
 }: {
@@ -346,16 +426,14 @@ const TopicModuleDisplay = function TopicModuleDisplay({
   description: string;
 }) {
   const [queryString] = useAtom(queryStringAtom);
+  const initialInput = `${queryString} ${name}: ${description}`;
   const { completion, complete, input, stop, isLoading } = useCompletion({
     api: "/api/modules",
-    initialInput:
-      name && description
-        ? `${queryString} focus specifically on ${name}: ${description}`
-        : "",
+    initialInput,
     id: name + ": " + description,
   });
 
-  const modules =
+  const modules: ModuleCard[] =
     completion.split("\n\n").map((topicString) => {
       const rawName = removeLeadingNumber(topicString.split(":")[0] || "");
       // Break out subname if it exists "Name (subname}"
@@ -368,7 +446,7 @@ const TopicModuleDisplay = function TopicModuleDisplay({
         description: topicString.split(":")[1] || "",
       };
     }) || [];
-  const minimumCountToDisplay = 8;
+  const minimumCountToDisplay = 6;
   const loadingSkeletonCount = minimumCountToDisplay - modules.length;
   const hasSubmitted = useRef(false);
   useEffect(() => {
@@ -392,12 +470,12 @@ const TopicModuleDisplay = function TopicModuleDisplay({
 
   return (
     <>
-      {modules.map((module) => {
+      {modules.map((module, i) => {
         const isLast = module === modules[modules.length - 1];
         const isCompleting = isLast && isLoading;
         return (
           <Module
-            key={module.name}
+            key={`${module.name}${i}`}
             name={module.name}
             subName={module.subname}
             description={module.description}
@@ -412,7 +490,7 @@ const TopicModuleDisplay = function TopicModuleDisplay({
         ))}
     </>
   );
-};
+});
 
 const Module = memo(
   function Module({
@@ -429,7 +507,11 @@ const Module = memo(
     const [text, setText] = useAtom(queryStringAtom);
     const [hoveredModule, setHoveredModule] = useAtom(hoveredModuleAtom);
     const isHovering = hoveredModule === name + description;
-    const isOtherModuleHovering = hoveredModule !== null && !isHovering;
+    const isTouchDevice =
+      typeof window !== "undefined" && "ontouchstart" in window;
+
+    const [, setModuleInModalAtom] = useAtom(moduleInModalAtom);
+    //const isOtherModuleHovering = hoveredModule !== null && !isHovering;
 
     return (
       <div
@@ -444,20 +526,33 @@ const Module = memo(
         role="button"
         tabIndex={-1}
         onClick={() => {
+          if (isTouchDevice) {
+            setModuleInModalAtom({
+              name,
+              subname: subName,
+              description,
+            });
+
+            return;
+          }
+
           setText(text + " " + name);
           // Scroll to top
-          window.scrollTo(0, 0);
+          window.scrollTo({
+            top: 0,
+            behavior: "smooth",
+          });
         }}
       >
         <div
           className={classNames(
             "relative min-h-[9rem]  w-60 rounded-md border  bg-white p-3  transition-all duration-300",
             {
-              "border-transparent opacity-80": isOtherModuleHovering,
+              //"opacity-60": isOtherModuleHovering,
               "scale-[.98] ": isCompleting,
-              "  shadow": !isCompleting,
-              "0 h-[9rem] max-h-0 overflow-hidden border-gray-100": !isHovering,
-              "z-10 max-h-[1000rem] translate-y-[-0.75rem] overflow-auto border-gray-200 shadow-lg":
+              //"shadow-md": !isCompleting,
+              "0 h-[9rem] max-h-0 overflow-hidden border-gray-200": !isHovering,
+              "z-10 max-h-[1000rem] translate-y-[-0.75rem] overflow-auto border-gray-200 shadow-md":
                 isHovering,
             }
           )}
@@ -541,7 +636,7 @@ function TopicLoadingSkeleton() {
 function TopicTitleLoadingSkeleton() {
   return (
     <div
-      className="bg-muted flex w-60 animate-pulse rounded-md p-5"
+      className="bg-muted flex w-60 animate-pulse rounded-md p-6"
       style={{
         backgroundImage: "linear-gradient(135deg,#ffffff,#f7f7f7)",
         //border: "1px solid rgba(176,182,253,.1)",
@@ -568,7 +663,7 @@ function ModulesLoadingSkeleton() {
 function ModuleLoadingSkeleton() {
   return (
     <div
-      className="bg-muted flex h-36 w-60 scale-[.98] animate-pulse rounded-md border border-gray-200 bg-[rgba(255,255,255,0.07)] p-6"
+      className="bg-muted flex h-36 w-60 flex-shrink-0 scale-[.98] animate-pulse rounded-md border border-gray-200 bg-[rgba(255,255,255,0.07)] p-6"
       style={{
         backgroundImage: "linear-gradient(135deg,#ffffff,#f7f7f7)",
         //border: "1px solid rgba(176,182,253,.1)",
