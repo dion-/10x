@@ -203,7 +203,7 @@ function Form() {
 const SuggestedSearches = () => {
   const [, setQueryString] = useAtom(queryStringAtom);
   return (
-    <div className="mt-6 flex flex-col gap-2 md:flex-row md:items-center  md:justify-center">
+    <div className="mt-6 flex flex-col gap-2 md:flex-row md:justify-center">
       <div className="flex flex-row gap-1 pl-4 text-sm font-bold text-slate-700 md:justify-center">
         <ClickIcon
           className="opacity-80"
