@@ -13,6 +13,12 @@ import InfoIcon from "./../icons/info.svg";
 import SendIcon from "./../icons/send.svg";
 import ClickIcon from "./../icons/click.svg";
 
+type ModuleCard = {
+  name: string;
+  subname?: string;
+  description: string;
+};
+
 const rainbowGradient =
   "linear-gradient(135deg,#f90,#fd66cb 25%,#9f6eff 50%,#0af 75%,#0ea)";
 
@@ -23,12 +29,6 @@ const apiKeyAtom = atomWithStorage<string>("api-key", "");
 const hoveredModuleAtom = atom<string | null>(null);
 const rawCompletionTextAtom = atom<string>("");
 const isRawCompletionLoadingAtom = atom<boolean>(false);
-
-type ModuleCard = {
-  name: string;
-  subname?: string;
-  description: string;
-};
 
 const topicsAtom = atom<{ name: string; description: string }[]>((get) => {
   const rawCompletionText = get(rawCompletionTextAtom);
@@ -42,11 +42,28 @@ const topicsAtom = atom<{ name: string; description: string }[]>((get) => {
   return topics;
 });
 
+const exampleQueries = [
+  "Timeline of the 20th century",
+  "Travelling to New Zealand",
+  "Pancake Recipe",
+  "Overview of History of Greece",
+  "How to maintain a Lawn",
+];
+
 const Home: NextPage = () => {
+  const [queryString, setQueryString] = useAtom(queryStringAtom);
+  useEffect(() => {
+    setTimeout(() => {
+      if (queryString === "") {
+        setQueryString(exampleQueries[0] || "");
+      }
+    }, 1800);
+  }, []);
+
   return (
     <>
       <Head>
-        <title>10×</title>
+        <title>10×Cards</title>
         <meta name="description" content="10×" />
         <link rel="icon" href="/logo.png" />
         <link rel="icon" href="/favicon.png" type="image/png" sizes="108x108" />
@@ -143,6 +160,7 @@ function ModuleModal() {
 }
 
 function ErrorModal() {
+  const [, settingsModalOpen] = useAtom(settingsModalOpenAtom);
   const [error, setError] = useAtom(errorAtom);
 
   if (!error) return null;
@@ -158,6 +176,7 @@ function ErrorModal() {
               className="mt-4 w-44 rounded-md bg-slate-700 px-4 py-2 font-bold text-white"
               onClick={() => {
                 setError(null);
+                settingsModalOpen(true);
               }}
             >
               Close
@@ -323,10 +342,8 @@ function SettingsModal() {
 }
 
 function useHandleCompletionError() {
-  const [queryString, setQueryString] = useAtom(queryStringAtom);
   const [, setError] = useAtom(errorAtom);
   const [, setSettingsOpen] = useAtom(settingsModalOpenAtom);
-  //console.log(error);
 
   return (error: Error | undefined) => {
     console.log("error", error);
@@ -420,7 +437,7 @@ function Form() {
 }
 
 const SuggestedSearches = () => {
-  const [, setQueryString] = useAtom(queryStringAtom);
+  const [queryString, setQueryString] = useAtom(queryStringAtom);
   return (
     <div className="mt-6 flex flex-col gap-2 md:flex-row md:justify-center">
       <div className="flex flex-row gap-1 pl-4 text-sm font-bold text-slate-700 md:justify-center">
@@ -434,56 +451,25 @@ const SuggestedSearches = () => {
         Try:
       </div>
       <ul className="flex list-none flex-row gap-2 overflow-scroll px-4 pb-4 text-xs text-slate-700">
-        <li className="flex-shrink-0 ">
-          <button
-            className="cursor-pointer rounded-md bg-slate-100 px-2 py-1"
-            onClick={() => {
-              setQueryString("Travelling to New Zealand");
-            }}
-          >
-            Travelling to New Zealand
-          </button>
-        </li>
-        <li className="flex-shrink-0 ">
-          <button
-            className="cursor-pointer rounded-md bg-slate-100 px-2 py-1"
-            onClick={() => {
-              setQueryString("Pancake Recipe");
-            }}
-          >
-            Pancake Recipe
-          </button>
-        </li>
-        <li className="flex-shrink-0 ">
-          <button
-            className="cursor-pointer rounded-md bg-slate-100 px-2 py-1"
-            onClick={() => {
-              setQueryString("Overview of History of Greece");
-            }}
-          >
-            Overview Rome History
-          </button>
-        </li>
-        <li className="flex-shrink-0 ">
-          <button
-            className="cursor-pointer rounded-md bg-slate-100 px-2 py-1"
-            onClick={() => {
-              setQueryString("Timeline of the 20th century");
-            }}
-          >
-            Timeline of the 20th century
-          </button>
-        </li>
-        <li className="flex-shrink-0">
-          <button
-            className="cursor-pointer rounded-md bg-slate-100 px-2 py-1"
-            onClick={() => {
-              setQueryString("How to maintain a lawn?");
-            }}
-          >
-            How to maintain a lawn?
-          </button>
-        </li>
+        {exampleQueries.map((query, i) => {
+          return (
+            <li key={i} className="flex-shrink-0">
+              <button
+                className={classNames(
+                  "cursor-pointer rounded-md bg-slate-100 px-2 py-1",
+                  {
+                    "bg-purple-200": queryString === query,
+                  }
+                )}
+                onClick={() => {
+                  setQueryString(query);
+                }}
+              >
+                {query}
+              </button>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
