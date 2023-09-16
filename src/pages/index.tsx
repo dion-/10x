@@ -1,12 +1,15 @@
-import { memo, useEffect, useRef } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { useCompletion } from "ai/react";
 import { type NextPage } from "next";
 import Head from "next/head";
 import classNames from "classnames";
 import { atom, useAtom, useAtomValue } from "jotai";
 import { atomWithHash } from "jotai-location";
+import { atomWithStorage } from "jotai/utils";
 import { useAnimate } from "framer-motion";
 import FanIcon from "./../icons/fan.svg";
+import CogIcon from "./../icons/cog.svg";
+import InfoIcon from "./../icons/info.svg";
 import SendIcon from "./../icons/send.svg";
 import ClickIcon from "./../icons/click.svg";
 
@@ -14,6 +17,9 @@ const rainbowGradient =
   "linear-gradient(135deg,#f90,#fd66cb 25%,#9f6eff 50%,#0af 75%,#0ea)";
 
 const queryStringAtom = atomWithHash<string>("query", "");
+const errorAtom = atom<string | null>(null);
+const settingsModalOpenAtom = atom<boolean>(false);
+const apiKeyAtom = atomWithStorage<string>("api-key", "");
 const hoveredModuleAtom = atom<string | null>(null);
 const rawCompletionTextAtom = atom<string>("");
 const isRawCompletionLoadingAtom = atom<boolean>(false);
@@ -65,12 +71,15 @@ const Home: NextPage = () => {
           <FancyBadge />
           <Form />
           <SuggestedSearches />
+          <SettingsCog />
         </header>
 
         <div className="container flex flex-col items-center justify-center gap-12 pb-16 pt-8 md:px-4">
           <AllTopics />
         </div>
         <ModuleModal />
+        <ErrorModal />
+        <SettingsModal />
       </main>
     </>
   );
@@ -133,7 +142,209 @@ function ModuleModal() {
   );
 }
 
+function ErrorModal() {
+  const [error, setError] = useAtom(errorAtom);
+
+  if (!error) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="relative flex max-w-lg flex-col items-center justify-center overflow-auto rounded-md bg-white shadow-lg">
+        <div className="items- flex h-full w-full flex-col justify-center p-4">
+          <h2 className="text-2xl font-bold">Error</h2>
+          <p className="pt-2 text-lg ">{error}</p>
+          <div className="flex items-end justify-center">
+            <button
+              className="mt-4 w-44 rounded-md bg-slate-700 px-4 py-2 font-bold text-white"
+              onClick={() => {
+                setError(null);
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function maskKey(key: string) {
+  if (key.length < 8) return key;
+
+  return key.slice(0, 3) + "∙".repeat(14) + key.slice(-3);
+}
+
+function SettingsCog() {
+  const [, setIsOpen] = useAtom(settingsModalOpenAtom);
+  return (
+    <div
+      className="absolute right-6 top-6 cursor-pointer opacity-70 transition-opacity hover:opacity-90"
+      onClick={() => {
+        setIsOpen(true);
+      }}
+    >
+      <CogIcon
+        style={{
+          width: "1.7em",
+          height: "1.7em",
+        }}
+      />
+    </div>
+  );
+}
+
+function SettingsModal() {
+  const [queryString, setQueryString] = useAtom(queryStringAtom);
+  const [isOpen, setIsOpen] = useAtom(settingsModalOpenAtom);
+  const [apiKey, setApiKey] = useAtom(apiKeyAtom);
+  const [apiKeyValue, setApiKeyValue] = useState("");
+  const displayApiKey = maskKey(apiKey);
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
+      onClick={() => {
+        setIsOpen(false);
+      }}
+    >
+      <div
+        className="relative flex max-w-lg flex-col items-center justify-center overflow-auto rounded-md border-4 border-white bg-white shadow-lg"
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
+      >
+        <div className="items- flex h-full w-full flex-col justify-center  px-6 py-8">
+          <div
+            className="absolute bottom-0 left-0 right-0 top-0 z-0 m-auto rounded-md border"
+            style={{
+              backgroundImage: rainbowGradient,
+              opacity: 0.15,
+            }}
+          />
+
+          <div className="z-10">
+            <h3>
+              <span className="text-2xl font-bold">Settings</span>
+            </h3>
+            <p className="pt-4 font-bold">
+              {apiKey ? "API Key" : "Enter API Key"}
+            </p>
+
+            {apiKey ? (
+              <div className="mt-2 flex gap-2 border-b border-white pb-10">
+                <input
+                  className=" w-full rounded-md bg-white px-4 py-2  text-slate-950"
+                  value={displayApiKey}
+                  disabled
+                  placeholder="sk-•••••••••••••••••••••••••"
+                />
+                <button
+                  type="submit"
+                  className="w-24 rounded-md bg-white px-4 py-2 font-bold text-gray-500"
+                  onClick={() => {
+                    setApiKey("");
+                    setApiKeyValue("");
+                  }}
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <form
+                className="mt-2 flex gap-2 border-b border-neutral-100 pb-10"
+                onSubmit={() => {
+                  setApiKey(apiKeyValue);
+                  setIsOpen(false);
+                  setQueryString("");
+                  setQueryString(queryString);
+                }}
+              >
+                <input
+                  className=" w-full rounded-md bg-white px-4 py-2  text-slate-950"
+                  value={apiKeyValue}
+                  onChange={(e) => {
+                    setApiKeyValue(e.target.value);
+                  }}
+                  placeholder="sk-•••••••••••••••••••••••••"
+                />
+                <button
+                  type="submit"
+                  className=" w-44 rounded-md bg-slate-700 px-4 py-2 font-bold text-white"
+                >
+                  Save
+                </button>
+              </form>
+            )}
+
+            <div className="mt-10 rounded-md  bg-white p-4 text-sm">
+              <div className="flex items-center gap-2 pb-4 text-center font-bold opacity-80">
+                <InfoIcon style={{ width: "1.2em", height: "1.2em" }} />
+                <span>OpenAI API Key Required</span>
+              </div>
+              <p className="font-semibold text-slate-600 opacity-80">Access</p>
+              <p className="text-slate-950 opacity-80">
+                10x runs on GPT-3.5 and an API key is required for use, which
+                can be found here:{" "}
+                <a
+                  className="underline"
+                  target="_blank"
+                  href="https://beta.openai.com/account/api-keys"
+                >
+                  https://beta.openai.com/account/api-keys
+                </a>
+              </p>
+              <p className="mt-4 font-semibold text-slate-600 opacity-80">
+                Usage Limit
+              </p>
+              <p className="text-slate-950 opacity-80">
+                This tool runs multiple completions in parallel, which can use a
+                lot of tokens. Please ensure your account has an appropriate
+                usage limit set and monitor your usage to avoid surprises.
+              </p>
+
+              <p className="mt-4 font-semibold text-slate-600 opacity-80">
+                Keys are stored in your browser
+              </p>
+              <p className="text-slate-960 opacity-80">
+                Your key are only sent to the server when a request that
+                requires the OpenAI API is made. Your keys are not stored or
+                logged on the server or sent anywhere else. Although care is
+                taken to keep your keys safe, no guarantees are made.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function useHandleCompletionError() {
+  const [queryString, setQueryString] = useAtom(queryStringAtom);
+  const [, setError] = useAtom(errorAtom);
+  const [, setSettingsOpen] = useAtom(settingsModalOpenAtom);
+  //console.log(error);
+
+  return (error: Error | undefined) => {
+    console.log("error", error);
+    if (error) {
+      // setQueryString("");
+      // stop();
+      if (error.message === "Missing API key") {
+        setSettingsOpen(true);
+        return;
+      }
+
+      setError(error.message);
+    }
+  };
+}
+
 function Form() {
+  const [apiKey] = useAtom(apiKeyAtom);
   const {
     completion,
     input,
@@ -145,11 +356,16 @@ function Form() {
   } = useCompletion({
     api: "/api/topics",
     id: "topics",
+    headers: {
+      "x-api-key": apiKey,
+    },
+    onError: useHandleCompletionError(),
   });
   const [queryString, setQueryString] = useAtom(queryStringAtom);
   const [, setRawCompletionText] = useAtom(rawCompletionTextAtom);
   const [, setIsLoading] = useAtom(isRawCompletionLoadingAtom);
   const formRef = useRef<HTMLFormElement>(null);
+  //useHandleCompletionError(error, stop);
 
   useEffect(() => {
     setRawCompletionText(completion);
@@ -173,30 +389,33 @@ function Form() {
   }, [queryString]);
 
   return (
-    <form
-      ref={formRef}
-      className="relative flex w-[100vw] flex-row items-center px-4 md:w-96"
-      onSubmit={(e) => {
-        if (input !== "") {
-          setQueryString(input); // useEffect above will trigger 'complete'
-        }
-        e.stopPropagation();
-      }}
-    >
-      <input
-        className="h-12 w-full  rounded-md bg-slate-100 px-4 pr-14 "
-        placeholder="Enter topic, .e.g., Mathematics"
-        value={input}
-        onChange={handleInputChange}
-      />
-      <button
-        disabled={isLoading}
-        type="submit"
-        className="absolute right-4 flex cursor-pointer items-center justify-center  px-3 py-3 font-bold text-white"
+    <>
+      <form
+        ref={formRef}
+        className="relative flex w-[100vw] flex-row items-center px-4 md:w-96"
+        onSubmit={(e) => {
+          if (input !== "") {
+            setQueryString(input); // useEffect above will trigger 'complete'
+          }
+          e.stopPropagation();
+        }}
       >
-        <SendIcon className="h-5 w-5" fill="rgba(0,0,0,.15)" />
-      </button>
-    </form>
+        <input
+          className="h-12 w-full  rounded-md bg-slate-100 px-4 pr-14 "
+          placeholder="Enter topic, .e.g., Mathematics"
+          value={input}
+          onChange={handleInputChange}
+        />
+        <button
+          disabled={isLoading}
+          type="submit"
+          className="absolute right-4 flex cursor-pointer items-center justify-center  px-3 py-3 font-bold text-white"
+        >
+          <SendIcon className="h-5 w-5" fill="rgba(0,0,0,.15)" />
+        </button>
+      </form>
+      {/* {error && <div className="text-sm text-red-500">{error.message}</div>} */}
+    </>
   );
 }
 
@@ -427,11 +646,19 @@ const TopicModuleDisplay = memo(function TopicModuleDisplay({
 }) {
   const [queryString] = useAtom(queryStringAtom);
   const initialInput = `${queryString} ${name}: ${description}`;
-  const { completion, complete, input, stop, isLoading } = useCompletion({
-    api: "/api/modules",
-    initialInput,
-    id: name + ": " + description,
-  });
+  const [apiKey] = useAtom(apiKeyAtom);
+  const { completion, complete, input, stop, isLoading, error } = useCompletion(
+    {
+      api: "/api/modules",
+      initialInput,
+      id: name + ": " + description,
+      headers: {
+        "x-api-key": apiKey,
+      },
+    }
+  );
+
+  //useHandleCompletionError(error);
 
   const modules: ModuleCard[] =
     completion.split("\n\n").map((topicString) => {

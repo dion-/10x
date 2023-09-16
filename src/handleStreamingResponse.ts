@@ -3,10 +3,6 @@ import { OpenAIStream, StreamingTextResponse } from "ai";
 import { type modulePrompts, type TopicPromptKey } from "./prompts/prompts";
 import { redis } from "./persistence/redis";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
-
 export async function handleStreamingResponse(
   cacheModule: string,
   req: Request,
@@ -15,10 +11,11 @@ export async function handleStreamingResponse(
 ) {
   // Extract the `messages` from the body of the request
   const { prompt } = (await req.json()) as { prompt: string };
+  // Get api key from headers
+  const apiKey = req.headers.get("x-api-key");
+
   const topicType = await determineTopicType(prompt);
   const cacheBreaking = 1;
-
-  //console.log(topicType);
 
   const cacheKey = `${cacheModule}${cacheBreaking}${prompt.replace(/ /g, "_")}`;
   const cachedResponse = (await redis.get(cacheKey)) as string;
@@ -41,32 +38,51 @@ export async function handleStreamingResponse(
     return new StreamingTextResponse(stream);
   }
 
-  // Request the OpenAI API for the response based on the prompt
-  const response = await openai.chat.completions.create({
-    model: "gpt-3.5-turbo",
-    stream: true,
-    messages: [
-      ...messages[topicType],
-      {
-        role: "user",
-        content: prompt,
+  if (!apiKey) {
+    return new Response("Missing API key", {
+      status: 400,
+      statusText: "Missing API key",
+    });
+  }
+
+  const openai = new OpenAI({
+    apiKey,
+  });
+
+  //return new Response("Token ", { status: 500, statusText: "Token invalid" });
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      stream: true,
+      messages: [
+        ...messages[topicType],
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+    });
+    const stream = OpenAIStream(response, {
+      // onFinal(...args) {
+      //   //await redis.set(cacheKey, completion);
+      //   //console.log("cached response", cacheKey, args);
+      // },
+      async onCompletion(completion) {
+        await redis.set(cacheKey, completion);
       },
-    ],
-  });
-
-  // Convert the response into a friendly text-stream
-  const stream = OpenAIStream(response, {
-    // onFinal(...args) {
-    //   //await redis.set(cacheKey, completion);
-    //   //console.log("cached response", cacheKey, args);
-    // },
-    async onCompletion(completion) {
-      await redis.set(cacheKey, completion);
-    },
-  });
-
-  // Respond with the stream
-  return new StreamingTextResponse(stream);
+    });
+    return new StreamingTextResponse(stream);
+  } catch (err) {
+    if (err instanceof OpenAI.APIError) {
+      return new Response(err.message, {
+        status: err.status,
+        statusText: err.name,
+      });
+    } else {
+      throw err;
+    }
+  }
 }
 
 async function determineTopicType(query: string): Promise<TopicPromptKey> {
