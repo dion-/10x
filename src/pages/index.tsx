@@ -14,7 +14,7 @@ import CogIcon from "./../icons/cog.svg";
 import InfoIcon from "./../icons/info.svg";
 import SendIcon from "./../icons/send.svg";
 import ClickIcon from "./../icons/click.svg";
-import { bodyFont, headerFont, fancyFont } from "../fonts";
+import { bodyFont } from "../fonts";
 
 type ModuleCard = {
   name: string;
