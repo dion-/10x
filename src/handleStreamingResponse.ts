@@ -59,8 +59,8 @@ export async function handleStreamingResponse(
 
   try {
     const response = await openai.chat.completions.create({
-      //model: "gpt-3.5-turbo",
-      model: "gpt-4",
+      model: "gpt-3.5-turbo",
+      //model: "gpt-4",
       stream: true,
       temperature: 0.7,
       messages: [

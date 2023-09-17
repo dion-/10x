@@ -7,6 +7,8 @@ import { atom, useAtom, useAtomValue } from "jotai";
 import { atomWithHash } from "jotai-location";
 import { atomWithStorage } from "jotai/utils";
 import { useAnimate } from "framer-motion";
+import mixpanel from "mixpanel-browser";
+
 import FanIcon from "./../icons/fan.svg";
 import CogIcon from "./../icons/cog.svg";
 import InfoIcon from "./../icons/info.svg";
@@ -45,9 +47,10 @@ const topicsAtom = atom<{ name: string; description: string }[]>((get) => {
 
 const suggestedSearches = [
   "Timeline of the 20th century",
-  "Travelling to New Zealand",
+  //"Travelling to New Zealand",
   "Pancake Recipe",
   "Overview of Greek History",
+  "List of Starter Pokemon",
   "How to maintain a Lawn",
 ];
 
@@ -61,11 +64,21 @@ const Home: NextPage = () => {
     }, 1800);
   }, []);
 
+  useEffect(() => {
+    mixpanel.init(process.env.NEXT_PUBLIC_MIXPANEL_ID as string, {
+      debug: true,
+      track_pageview: true,
+      persistence: "localStorage",
+    });
+
+    mixpanel.track("Page View");
+  }, []);
+
   return (
     <>
       <Head>
-        <title>10×Cards</title>
-        <meta name="description" content="10×" />
+        <title>10× LLM</title>
+        <meta name="description" content="LLM at the speed of thought" />
         <link rel="icon" href="/logo.png" />
         <link rel="icon" href="/favicon.png" type="image/png" sizes="108x108" />
         <style global>{`
@@ -89,7 +102,7 @@ const Home: NextPage = () => {
                 backgroundClip: "text",
               }}
             >
-              {/* 10× AI */}veidt.ai
+              10× LLM
             </span>
           </h1>
           <FancyBadge />
@@ -172,6 +185,10 @@ function ErrorModal() {
 
   if (!error) return null;
 
+  mixpanel.track("Error", {
+    error,
+  });
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="relative flex max-w-lg flex-col items-center justify-center overflow-auto rounded-md bg-white shadow-lg">
@@ -228,6 +245,7 @@ function SettingsModal() {
   const displayApiKey = maskKey(apiKey);
 
   if (!isOpen) return null;
+  mixpanel.track("Show Settings");
 
   return (
     <div
@@ -286,6 +304,7 @@ function SettingsModal() {
                   setIsOpen(false);
                   setQueryString("");
                   setQueryString(queryString);
+                  mixpanel.track("Added key");
                 }}
               >
                 <input
@@ -403,6 +422,9 @@ function Form() {
     stop();
     setInput(queryString);
     if (queryString === "") return;
+    mixpanel.track("Query", {
+      queryString,
+    });
     complete(queryString)
       .then((_) => {
         //console.log("completed");
