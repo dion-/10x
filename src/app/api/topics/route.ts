@@ -1,5 +1,3 @@
-import OpenAI from "openai";
-import { OpenAIStream, StreamingTextResponse } from "ai";
 import { topicPrompts } from "../../../prompts/prompts";
 import { handleStreamingResponse } from "~/handleStreamingResponse";
 

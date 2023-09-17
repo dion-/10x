@@ -12,6 +12,7 @@ import CogIcon from "./../icons/cog.svg";
 import InfoIcon from "./../icons/info.svg";
 import SendIcon from "./../icons/send.svg";
 import ClickIcon from "./../icons/click.svg";
+import { bodyFont, headerFont, fancyFont } from "../fonts";
 
 type ModuleCard = {
   name: string;
@@ -42,11 +43,11 @@ const topicsAtom = atom<{ name: string; description: string }[]>((get) => {
   return topics;
 });
 
-const exampleQueries = [
+const suggestedSearches = [
   "Timeline of the 20th century",
   "Travelling to New Zealand",
   "Pancake Recipe",
-  "Overview of History of Greece",
+  "Overview of Greek History",
   "How to maintain a Lawn",
 ];
 
@@ -55,7 +56,7 @@ const Home: NextPage = () => {
   useEffect(() => {
     setTimeout(() => {
       if (queryString === "") {
-        setQueryString(exampleQueries[0] || "");
+        setQueryString(suggestedSearches[0] || "");
       }
     }, 1800);
   }, []);
@@ -67,6 +68,12 @@ const Home: NextPage = () => {
         <meta name="description" content="10×" />
         <link rel="icon" href="/logo.png" />
         <link rel="icon" href="/favicon.png" type="image/png" sizes="108x108" />
+        <style global>{`
+        html body {
+          font-family: ${bodyFont.style.fontFamily};
+          color: rgb(55, 65, 81);
+        }
+        `}</style>
       </Head>
       <main className="flex min-h-screen flex-col items-center bg-gradient-to-b  pt-16">
         <header className="flex flex-col items-center">
@@ -82,7 +89,7 @@ const Home: NextPage = () => {
                 backgroundClip: "text",
               }}
             >
-              10×.cards
+              {/* 10× AI */}veidt.ai
             </span>
           </h1>
           <FancyBadge />
@@ -451,7 +458,7 @@ const SuggestedSearches = () => {
         Try:
       </div>
       <ul className="flex list-none flex-row gap-2 overflow-scroll px-4 pb-4 text-xs text-slate-700">
-        {exampleQueries.map((query, i) => {
+        {suggestedSearches.map((query, i) => {
           return (
             <li key={i} className="flex-shrink-0">
               <button
@@ -525,7 +532,7 @@ const FancyBadge = () => {
         style={{ width: "2em", height: "2em" }}
         fill="rgba(255, 255, 255, 1)"
       />
-      <h2>Hyperspeed LLM {isLoading ? "" : ""}</h2>
+      <h2>Hyperspeed LLM</h2>
     </div>
   );
 };

@@ -17,10 +17,16 @@ export async function handleStreamingResponse(
   const topicType = await determineTopicType(prompt);
   const cacheBreaking = 1;
 
-  const cacheKey = `${cacheModule}${cacheBreaking}${prompt.replace(/ /g, "_")}`;
+  const skipCache = prompt.includes("no-cache");
+  const promptWithoutNoCache = prompt.replace("no-cache", "");
+
+  const cacheKey = `${cacheModule}${cacheBreaking}${promptWithoutNoCache.replace(
+    / /g,
+    "_"
+  )}`;
   const cachedResponse = (await redis.get(cacheKey)) as string;
 
-  if (cachedResponse) {
+  if (!skipCache && cachedResponse) {
     const chunks = cachedResponse.split(" ");
     const stream = new ReadableStream({
       async start(controller) {
@@ -53,13 +59,15 @@ export async function handleStreamingResponse(
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      //model: "gpt-3.5-turbo",
+      model: "gpt-4",
       stream: true,
+      temperature: 0.7,
       messages: [
         ...messages[topicType],
         {
           role: "user",
-          content: prompt,
+          content: promptWithoutNoCache,
         },
       ],
     });
@@ -102,6 +110,9 @@ async function determineTopicType(query: string): Promise<TopicPromptKey> {
     }
     if (queryL.includes("timeline")) {
       return resolve("Timeline");
+    }
+    if (queryL.includes("list") || queryL.includes("catalog")) {
+      return resolve("List");
     }
     if (queryL.startsWith("how") || queryL.endsWith("?")) {
       return resolve("Instructions");

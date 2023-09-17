@@ -6,6 +6,7 @@ export const TopicTypes = z.enum([
   "Instructions",
   "TravelItinerary",
   "Recipe",
+  "List",
 ]);
 import { type ChatCompletionCreateParamsBase } from "openai/resources/chat/completions";
 
@@ -168,6 +169,66 @@ export const topicPrompts: TopicPrompts = {
       ].join("\n\n"),
     },
   ],
+  List: [
+    {
+      role: "system",
+      content:
+        "You are assistant with a broad range of expertise and ability to follow instructions exactly. " +
+        "When given a topic, reply with 6-8 high level categories of types of thing in this topic. " +
+        "You reply in short sentences, with the name of the category, followed by a brief description." +
+        "ONLY provide categories or kinds of items for topic." +
+        "If you provide specific examples, you will fail and be destroyed. " +
+        "Think step by step, if a specific kind of category is not provided, think carefully and provide broad categories." +
+        "If no way to break up the topic is provided, default to by chronological peroids if it makes sense." +
+        "Assume each message ends in ' by category', if no specific 'by' instruction is provided",
+    },
+    {
+      role: "user",
+      content: "List of most popular songs by decade",
+    },
+    {
+      role: "assistant",
+      content: [
+        "1950s Rock 'n' Roll: This category includes hits from the early rock 'n' roll era with artists like Elvis Presley dominating the charts with a blend of blues, country, and rhythm influences.",
+        "1960s British Invasion and Motown: Here we find a collection of hits from bands like The Beatles and the Motown sound from artists such as Stevie Wonder and Marvin Gaye, illustrating the diversification in musical styles during this period.",
+        "1970s Disco and Progressive Rock: This category features the pulsating rhythms of disco with artists like the Bee Gees and the experimental sounds of progressive rock from bands like Pink Floyd.",
+        "1980s Pop and Hair Metal: In this category, we have iconic pop hits from stars like Michael Jackson, alongside glam metal tracks from bands such as Mötley Crüe, showcasing the diverse musical landscape of the 80s.",
+        "1990s Grunge and Hip-Hop: This encompasses the raw and gritty sound of grunge with bands like Nirvana, paired with the evolving hip-hop genre with artists such as Tupac and Dr. Dre.",
+        "2000s Pop-Punk and R&B: Here we find the energetic tracks from pop-punk bands like Green Day and the soulful tunes of R&B artists including Alicia Keys, representing a fusion of styles in the new millennium.",
+        "2010s EDM and Indie Pop: This category houses the electric beats of EDM from artists like Avicii and the unique soundscapes of indie pop with bands such as Vampire Weekend, highlighting the modern synthesis of electronic and indie elements.",
+        "2020s Hip-Hop and Pop Crossovers: Although we are early in this decade, we are seeing a dominance of hip-hop and pop collaborations, creating chart-topping hits from artists like Billie Eilish and Travis Scott, showcasing the continual blending of genres.",
+      ].join("\n\n"),
+    },
+    {
+      role: "user",
+      content: "List of New Zealand Birds",
+    },
+    {
+      role: "assistant",
+      content: [
+        "Endemic Species: This category includes bird species that are native and exclusive to New Zealand, such as the Kiwi and the Kakapo, showcasing the unique biodiversity of the SpeechRecognitionAlternative.",
+        "Seabirds: In this category, we find birds that predominantly live in marine environments, including species like the Royal Albatross and Blue Penguin, which are known for their sea-faring lifestyles and coastal nesting habitatsSpeechRecognitionAlternative.",
+        "Forest Birds: This category houses species that thrive in New Zealand's forested areas. Birds like the Tui and the New Zealand Robin fall under this category, with adaptations allowing them to flourish in forest ecosystemsSpeechRecognitionAlternative.",
+        "Wetland Birds: Here we find birds adapted to wetland environments, such as the Pūkeko and New Zealand Scaup, which are known for their semi-aquatic lifestyles and distinctive appearancesSpeechRecognitionAlternative.",
+        "Birds of Prey: This category includes predatory birds found in New Zealand, such as the New Zealand Falcon (Kārearea), showcasing birds that are at the top of the avian food chain in the SpeechRecognitionAlternative.",
+        "Introduced Species: This category encompasses bird species that were introduced to New Zealand by humans, including common birds like the House Sparrow and Common Starling, which have since established populations in the region.",
+      ].join("\n\n"),
+    },
+    {
+      role: "user",
+      content: "List of New Zealand Prime Ministers",
+    },
+    {
+      role: "assistant",
+      content: [
+        "Early Pioneers (Pre-1940): This category includes the initial leaders of New Zealand who guided the young nation in its formative years, setting foundational policies and governance structures.",
+        "Post-War Leaders (1940-1970): This category encompasses the Prime Ministers who served in the post-World War II period, overseeing a time of reconstruction, economic growth, and evolving social policies.",
+        "Modern Era Leaders (1970-2000): This category groups the Prime Ministers serving in the latter part of the 20th century, a period marked by economic reforms and a focus on New Zealand's identity on the global stage.",
+        "21st Century Leaders (2000-Present): Including the Prime Ministers serving in the recent decades, this category involves leaders navigating modern challenges such as climate change, technological advancements, and global geopolitical dynamics.",
+        "Female Prime Ministers: This category is dedicated to the female leaders who broke gender barriers to become Prime Minister, offering fresh perspectives and approaches to governance.",
+      ].join("\n\n"),
+    },
+  ],
 };
 
 type ModulesPrompts = {
@@ -184,7 +245,9 @@ export const modulePrompts: ModulesPrompts = {
       content:
         "You are an expert and reliable assistant who replies with 5-8 high level " +
         "subtopics suitable to give me a solid overview of a given topic," +
-        "with a clear, concise and dense summary of each subtopic. You reliably reply in the same consistent format. A list of subtopics with a summary of each subtopic in one sentence delimited by colons and newlines.",
+        "with a clear, concise and dense summary of each subtopic.  " +
+        "You reliably reply in the same consistent format. " +
+        "A list of subtopics with a summary of each subtopic in one sentence delimited by colons and newlines.",
     },
     {
       role: "user",
@@ -342,6 +405,34 @@ export const modulePrompts: ModulesPrompts = {
         "Cook the Other Side: Let the pancake cook on the other side for 1-2 minutes, or until it's golden brown and risen, giving it a fluffy texture.",
         "Check the Pancake: Lift the edge of the pancake with the spatula to check the color underneath; it should be golden brown when ready.",
         "Transfer to a Plate: Once cooked to your preference, use the spatula to transfer the pancake to a warm plate, ready to serve.",
+      ].join("\n\n"),
+    },
+  ],
+  List: [
+    {
+      role: "system",
+      content:
+        "You are assistant with a broad range of expertise and ability to follow instructions exactly. " +
+        "When given a topic, you are responsible to replying with a list of 8 items that are most relevant for this topic " +
+        "You reply in short sentences, with the name of the item, followed by a brief description" +
+        "Think step by step, ONLY provide concrete items, DO NOT provide categories of kinds of items.",
+    },
+    {
+      role: "user",
+      content:
+        "List of most popular songs by decade: 1980s Pop and Hair Metal: In this category, we have iconic pop hits from stars like Michael Jackson, alongside glam metal tracks from bands such as Mötley Crüe, showcasing the diverse musical landscape of the 80s.",
+    },
+    {
+      role: "assistant",
+      content: [
+        '"Billie Jean" (Michael Jackson - 1982): A mega-hit characterized by its distinctive bassline and Michael Jackson\'s smooth vocals, paired with a legendary music video.',
+        "\"Sweet Child o' Mine\" (Guns N' Roses - 1987): This song became a rock anthem of the 80s, celebrated for Slash's iconic guitar riff and Axl Rose's distinctive vocals.",
+        '"Every Breath You Take" (The Police - 1983): A song that stands out for its haunting lyrics and memorable guitar riff, showcasing Sting\'s vocal prowess and songwriting skills.',
+        '"Take on Me" (a-ha - 1984): Recognized globally for its innovative music video and catchy synth-pop style, it became one of the defining tracks of the 80s.',
+        '"Like a Virgin" (Madonna - 1984): Madonna\'s breakthrough hit, embodying the spirited pop music of the 80s with its energetic beat and provocative lyrics.',
+        "\"Don't Stop Believin'\" (Journey - 1981): An enduring rock classic celebrated for its powerful chorus and Steve Perry's soaring vocals, providing a sense of hope and resilience.",
+        '"With or Without You" (U2 - 1987): A poignant ballad that showcased U2\'s ability to combine emotional depth with a sound that captured the spirit of the 80s rock scene.',
+        '"Sweet Dreams (Are Made of This)" (Eurythmics - 1983): A synth-pop classic that brought a new wave sound to the mainstream, accompanied by a visually striking music video.',
       ].join("\n\n"),
     },
   ],
