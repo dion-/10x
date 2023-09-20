@@ -47,11 +47,11 @@ const topicsAtom = atom<{ name: string; description: string }[]>((get) => {
 
 const suggestedSearches = [
   "Timeline of the 20th century",
-  //"Travelling to New Zealand",
-  "Pancake Recipe",
-  "Overview of Greek History",
+  "How do I onboard a new employee?",
+  "List of Data Science Topics",
+  "Overview of iOS Development",
   "List of Starter Pokemon",
-  "How to maintain a Lawn",
+  "Timeline of the 2008 Financial Crisis",
 ];
 
 const Home: NextPage = () => {
