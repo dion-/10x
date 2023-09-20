@@ -50,10 +50,10 @@ const suggestedSearches = [
   "How do I onboard a new employee?",
   "List of Data Science Topics",
   "Timeline of SpaceX",
-  "List of Half Marathon Training Tips",
+  //"List of Half Marathon Training Tips",
   "Overview of iOS Development",
-  "List of Starter Pokemon",
-  "Timeline of the 2008 Financial Crisis",
+  //"List of Starter Pokemon",
+  //"Timeline of the 2008 Financial Crisis",
 ];
 
 const Home: NextPage = () => {
