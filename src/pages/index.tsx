@@ -57,11 +57,10 @@ const suggestedSearches = [
 const Home: NextPage = () => {
   const [queryString, setQueryString] = useAtom(queryStringAtom);
   useEffect(() => {
-    setTimeout(() => {
-      if (queryString === "") {
-        setQueryString(suggestedSearches[0] || "");
-      }
-    }, 1800);
+    // if no location hash
+    if (window.location.hash === "") {
+      setQueryString(suggestedSearches[0] || "");
+    }
   }, []);
 
   useEffect(() => {
