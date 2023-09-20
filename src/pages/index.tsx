@@ -49,6 +49,7 @@ const suggestedSearches = [
   "Timeline of the 20th century",
   "How do I onboard a new employee?",
   "List of Data Science Topics",
+  "Timeline of SpaceX",
   "Overview of iOS Development",
   "List of Starter Pokemon",
   "Timeline of the 2008 Financial Crisis",
