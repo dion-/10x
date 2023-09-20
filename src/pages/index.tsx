@@ -328,10 +328,12 @@ function SettingsModal() {
                 <InfoIcon style={{ width: "1.2em", height: "1.2em" }} />
                 <span>OpenAI API Key Required</span>
               </div>
-              <p className="font-semibold text-slate-600 opacity-80">Access</p>
+              <p className="mb-1 font-semibold text-slate-600 opacity-80">
+                Access
+              </p>
               <p className="text-slate-950 opacity-80">
-                10x runs on GPT-3.5 and an API key is required for use, which
-                can be found here:{" "}
+                10x runs on GPT-3.5-turbo-4k and an API key is required for use,
+                which can be found here:{" "}
                 <a
                   className="underline"
                   target="_blank"
@@ -340,23 +342,29 @@ function SettingsModal() {
                   https://beta.openai.com/account/api-keys
                 </a>
               </p>
-              <p className="mt-4 font-semibold text-slate-600 opacity-80">
+              <p className="mb-1 mt-4 font-semibold text-slate-600 opacity-80">
                 Usage Limit
               </p>
               <p className="text-slate-950 opacity-80">
-                This tool runs multiple completions in parallel, which can use a
-                lot of tokens. Please ensure your account has an appropriate
-                usage limit set and monitor your usage to avoid surprises.
+                This tool runs multiple completions in parallel, a query will
+                typically use 2–3k tokens, so 2-3 queries will cost approx.
+                USD0.01{" "}
+                <a href="https://openai.com/pricing" className="underline">
+                  at current prices
+                </a>
+                . Please ensure your account has an appropriate usage limit set
+                and monitor your usage to avoid surprises.
               </p>
 
-              <p className="mt-4 font-semibold text-slate-600 opacity-80">
+              <p className="mb-1 mt-4 font-semibold text-slate-600 opacity-80">
                 Keys are stored in your browser
               </p>
               <p className="text-slate-960 opacity-80">
                 Your key are only sent to the server when a request that
                 requires the OpenAI API is made. Your keys are not stored or
                 logged on the server or sent anywhere else. Although care is
-                taken to keep your keys safe, no guarantees are made.
+                taken to keep your keys safe, no guarantees are made, so please
+                have appropriate usage limits set on your account.
               </p>
             </div>
           </div>
