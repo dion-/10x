@@ -362,9 +362,8 @@ function SettingsModal() {
                 Keys are stored in your browser
               </p>
               <p className="text-slate-960 opacity-80">
-                Your key are only sent to the server when a request that
-                requires the OpenAI API is made. Your keys are not stored or
-                logged on the server or sent anywhere else. Although care is
+                Your keys are sent to a server when necessary and are not stored
+                or logged on the server or sent anywhere else. Although care is
                 taken to keep your keys safe, no guarantees are made, so please
                 have appropriate usage limits set on your account.
               </p>
